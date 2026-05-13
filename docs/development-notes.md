@@ -1,0 +1,199 @@
+# 开发注意事项
+
+本文档记录开发过程中的关键技术决策、踩坑记录和注意事项，供后续开发者参考。
+
+## 数据库相关
+
+### better-sqlite3 事务不支持异步
+
+better-sqlite3 的 `transaction()` 不支持 async 回调——会抛出 "Transaction function cannot return a promise" 错误。
+
+**正确模式：** 在进入同步事务之前，预计算所有异步值（如通过 DB 查询生成 ID），然后在同步事务块内执行写入。
+
+```typescript
+// ❌ 错误：事务内有异步操作
+db.transaction(() => {
+  const id = await generateNextId(); // 报错！
+  db.insert(tasks).values({ id }).run();
+})();
+
+// ✅ 正确：预生成 ID，事务内纯同步
+const id = await generateNextId();
+db.transaction(() => {
+  db.insert(tasks).values({ id }).run();
+})();
+```
+
+这个模式在 `confirm-service.ts` 中使用，任何未来的事务写入都应遵循。
+
+### SQLite 保留字 references
+
+`references` 是 SQLite 保留字。Drizzle ORM 的查询构建器会自动加引号，但如果使用原生 SQL（`sql` 模板标签），必须手动加引号：
+
+```sql
+-- ❌ 会报语法错误
+SELECT references FROM tasks;
+
+-- ✅ 需要加引号
+SELECT "references" FROM tasks;
+```
+
+### Drizzle ORM sql 模板标签的限制
+
+Drizzle ORM 的 `sql` 模板标签在 `max()` + `CAST(SUBSTR(...))` 等 ID 序列提取场景中不可靠——列引用在聚合函数中可能不会正确插值为原始 SQL 列名。
+
+**替代方案：** 使用简单 SELECT + JS 端 parseInt 解析来生成 ID 序列。
+
+### 测试中的 SQLite 注意
+
+内存 SQLite 数据库（`:memory:`）使用 `memory` 日志模式而非 `wal`，测试代码需考虑此差异。
+
+## 认证相关
+
+### timingSafeEqual 的字节长度限制
+
+Node.js 的 `timingSafeEqual` 要求两个 Buffer 长度必须相同，否则抛出 `RangeError`。在调用前必须先校验长度：
+
+```typescript
+// ❌ 可能抛 RangeError
+timingSafeEqual(Buffer.from(a), Buffer.from(b));
+
+// ✅ 先校验长度
+const bufA = Buffer.from(a);
+const bufB = Buffer.from(b);
+if (bufA.length !== bufB.length) return false;
+return timingSafeEqual(bufA, bufB);
+```
+
+这个模式在 `auth.ts` 的 `validateBearerToken()` 和 `validatePassword()` 中使用。
+
+### 会话签名机制
+
+会话 token 不存储在服务端——使用无状态的 HMAC-SHA256 签名验证：
+- Token 格式：`{randomHex}.{hmac-sha256-hex}`
+- 签名密钥从 ADMIN_PASSWORD 派生（HMAC with fixed salt）
+- 24 小时有效期
+- 修改 ADMIN_PASSWORD 会使所有现有会话失效
+
+## SvelteKit 相关
+
+### 使用 adapter-node 而非 adapter-static
+
+项目必须使用 `@sveltejs/adapter-node`，因为系统需要服务端 API 路由（Agent 通过 REST API 上报进度）。`adapter-static` 不支持服务端路由。
+
+### 路由分组布局
+
+`(app)` 是 SvelteKit 的路由分组（group），不影响 URL 路径但共享布局：
+- 根 `+layout.svelte` — 全局 HTML 骨架
+- `(app)/+layout.svelte` — 认证后的应用布局（导航栏、侧边栏等）
+- `login/+page.svelte` — 在 (app) 之外，不需要认证
+
+### Svelte 5 Runes
+
+项目使用 Svelte 5 的 Runes API，不使用旧的 `$:` 响应式语法：
+- `$state()` — 可变状态
+- `$derived()` / `$derived.by()` — 派生计算值
+- `$props()` — 组件属性
+- `$effect()` — 副作用
+
+### Tailwind CSS 4 配置
+
+Tailwind CSS 4 使用 `@tailwindcss/vite` 插件，配置方式与 v3 不同：
+- 无需 `tailwind.config.js` 文件
+- 样式入口在 `src/app.css`，使用 `@import "tailwindcss"`
+- Vite 插件在 `vite.config.ts` 中配置，需放在 sveltekit() 之前
+
+## LLM 集成相关
+
+### LLM Client 是零依赖实现
+
+`llm-client.ts` 基于原生 `fetch` + `ReadableStream`，不依赖 OpenAI SDK。这意味着：
+- 支持 OpenAI 兼容 API（通过 LLM_BASE_URL 配置，如 Azure OpenAI、Claude API 等）
+- 需要手动解析 SSE 格式（`data:` 行）
+- 超时使用 AbortController（默认 30 秒）
+
+### SSE 拆解流式处理
+
+LLM 拆解服务使用增量 JSON 解析策略：
+1. LLM 输出 JSON 数组 `[{...}, {...}]`
+2. 服务端跟踪大括号栈深度
+3. 当栈深度回到 1（数组层级）时，提取一个完整的模块对象
+4. 使用 Zod schema 逐个校验，通过 SSE 推送
+
+这种方式避免了等待完整 JSON 输出，实现真正的流式体验。
+
+### POST-based SSE
+
+标准 EventSource 只支持 GET 请求。本项目的 decompose/compare 端点使用 POST，因此客户端 (`sse-client.ts`) 基于 `fetch` + `ReadableStream` 自行解析 SSE 协议。
+
+## 类型系统
+
+### Schema → Type 的单向数据流
+
+```
+src/lib/db/schema.ts          # Drizzle ORM schema（数据库层）
+       ↓ 导出状态枚举
+src/lib/schemas/*.ts          # Zod 验证 schema（API 层）
+       ↓ z.infer
+src/lib/types.ts              # TypeScript 类型导出（应用层）
+```
+
+**原则：**
+- 状态枚举（如 milestoneStatusEnum）在 DB schema 中定义，Zod schema 引用它们
+- 所有 TypeScript 类型从 Zod schema 推导，统一从 types.ts 导出
+- 不要在组件或 service 中直接重定义类型
+
+## CLI 工具
+
+### 配置文件格式
+
+CLI 使用 JSON 配置文件（`.mt-cli.json`），不是 YAML 或 TOML：
+
+```json
+{
+  "serverUrl": "http://localhost:5173",
+  "milestoneId": "MS-1",
+  "key": "mt_key_for_agent_1",
+  "agentName": "claude-code"
+}
+```
+
+### API Key 解析
+
+三种方式（按优先级从高到低）：
+1. `MT_API_KEY` 环境变量
+2. 当前目录的 `.mt-env` 文件（格式：`MT_API_KEY=xxx`）
+3. 配置文件中的 `key` 字段
+
+## 测试相关
+
+### 测试框架
+
+使用 Vitest，配置在 `vitest.config.ts`：
+- 测试环境：jsdom
+- 测试文件匹配：`src/**/*.{test,spec}.{js,ts}`
+
+### 运行测试
+
+```bash
+npm test           # 单次运行
+npm run test:watch  # 监视模式
+```
+
+## 常见问题
+
+### Q: 修改 ADMIN_PASSWORD 后为什么所有用户都登出了？
+
+A: 会话签名密钥从 ADMIN_PASSWORD 派生，修改密码会使所有现有会话的签名验证失败。这是设计预期行为。
+
+### Q: 为什么不用 UUID 作为 ID？
+
+A: 人类可读 ID（MS-1、TASK-42）方便在沟通、CLI 命令、任务引用（#42）中使用。short_id 是全局自增整数，专门用于人类快速引用。
+
+### Q: 如何添加新的 LLM 供应商？
+
+A: 设置 `LLM_BASE_URL` 指向供应商的 OpenAI 兼容端点，`LLM_MODEL` 设置对应的模型名。只要供应商兼容 OpenAI 的 chat completion + streaming API 格式，无需改代码。
+
+### Q: 任务 description 中的 #N 引用如何工作？
+
+A: 前端渲染时，`#N` 模式会被 ``TaskRefChip`` 组件替换为可点击的引用芯片，链接到对应任务。这不是数据库层功能，纯前端渲染。
