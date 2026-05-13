@@ -1,0 +1,21 @@
+{
+  "name": "mt-cli",
+  "version": "0.1.0",
+  "description": "AI Agent CLI for the Milestone Tracker system",
+  "type": "module",
+  "bin": {
+    "mt-cli": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "commander": "^13.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
+  }
+}
