@@ -1,4 +1,7 @@
 
+# ── Project skill (contains deployment secrets)
+.agents/
+
 # ── GSD baseline (auto-generated) ──
 .gsd
 .gsd-id
