@@ -8,6 +8,7 @@
  */
 
 import { LlmClient } from './llm-client.js';
+import { createLogger } from './logger.js';
 import type { ConfirmModule } from '$lib/schemas/confirm.js';
 import type {
 	CompareEvent,
@@ -15,6 +16,8 @@ import type {
 	CompareErrorEvent,
 	CompareDoneEvent
 } from '$lib/schemas/confirm.js';
+
+const logger = createLogger('compare-service');
 
 // ── System prompt ────────────────────────────────────────────────────────────
 
@@ -70,7 +73,7 @@ ${modulesText}
 
 请对比以上内容，给出改进建议。`;
 
-	console.info('[compare-service] Starting comparison:', {
+	logger.info('Starting comparison', {
 		sourceMdLength: sourceMd.length,
 		moduleCount: confirmedModules.length,
 		taskCount: confirmedModules.reduce((sum, m) => sum + m.tasks.length, 0)
@@ -88,7 +91,7 @@ ${modulesText}
 
 		const doneEvent: CompareDoneEvent = { type: 'done' };
 		yield doneEvent;
-		console.info('[compare-service] Comparison complete');
+		logger.info('Comparison complete');
 	} catch (err: any) {
 		const stage: 'connecting' | 'streaming' = 'connecting';
 		const errorEvent: CompareErrorEvent = {
@@ -97,6 +100,6 @@ ${modulesText}
 			message: err.message
 		};
 		yield errorEvent;
-		console.info('[compare-service] Stream error:', err.message);
+		logger.warn('Stream error', { error: err.message });
 	}
 }

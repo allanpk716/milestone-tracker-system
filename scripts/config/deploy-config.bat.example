@@ -1,0 +1,63 @@
+@echo off
+:: ════════════════════════════════════════════════════════════════
+::  Milestone Tracker - 部署配置模板
+:: ════════════════════════════════════════════════════════════════
+::
+::  使用方法:
+::    1. 复制此文件为 deploy-config.bat:
+::       copy scripts\config\deploy-config.bat.example deploy-config.bat
+::    2. 编辑 deploy-config.bat，填入实际值
+::    3. deploy-config.bat 已被 .gitignore 排除，不会被提交
+::
+::  ⚠️  此文件仅包含占位符，不包含真实密码或密钥
+:: ════════════════════════════════════════════════════════════════
+
+:: ── 远程服务器配置 ──────────────────────────────────────────
+:: 目标服务器地址（IP 或主机名）
+set REMOTE_HOST=your-server-address
+
+:: SSH 登录用户名
+set REMOTE_USER=username
+
+:: 远程部署路径（绝对路径）
+set REMOTE_PATH=C:\WorkSpace\milestone-tracker
+
+:: SSH 别名（用于 SSH config 中配置的别名，留空则使用 REMOTE_HOST）
+set SSH_ALIAS=update-hub
+
+:: ── Windows 服务配置 ────────────────────────────────────────
+:: NSSM 服务名称
+set SERVICE_NAME=MilestoneTracker
+
+:: 服务监听端口
+set SERVICE_PORT=30002
+
+:: Node.js 可执行文件路径（远程服务器上的 node.exe 路径）
+set NODE_PATH=C:\Program Files\nodejs\node.exe
+
+:: ── 健康检查配置 ────────────────────────────────────────────
+:: 健康检查 URL
+set HEALTH_CHECK_URL=http://172.18.200.47:30002/api/health
+
+:: 健康检查重试次数
+set HEALTH_CHECK_RETRIES=3
+
+:: 健康检查间隔（秒）
+set HEALTH_CHECK_INTERVAL=2
+
+:: ── 部署选项 ────────────────────────────────────────────────
+:: 是否在部署后自动重启服务（yes/no）
+set AUTO_RESTART=yes
+
+:: 是否在部署前备份当前版本（yes/no）
+set BACKUP_BEFORE_DEPLOY=yes
+
+:: 备份保留数量
+set BACKUP_KEEP_COUNT=3
+
+:: ── SCP/传输配置 ────────────────────────────────────────────
+:: SSH 端口（默认 22）
+set SSH_PORT=22
+
+:: SSH 密钥路径（留空使用默认 ~/.ssh/id_rsa）
+set SSH_KEY_PATH=

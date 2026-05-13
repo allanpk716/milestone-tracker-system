@@ -10,6 +10,9 @@ import { eq } from 'drizzle-orm';
 import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 import { modules, tasks, milestones } from '$lib/db/schema.js';
 import type { ConfirmModule } from '$lib/schemas/confirm.js';
+import { createLogger } from './logger.js';
+
+const logger = createLogger('confirm-service');
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -202,7 +205,7 @@ export async function confirmMilestone(
 	});
 
 	const totalTasks = createdModules.reduce((sum, m) => sum + m.tasks.length, 0);
-	console.info('[confirm-service] Milestone confirmed:', {
+	logger.info('Milestone confirmed', {
 		milestoneId,
 		moduleCount: createdModules.length,
 		taskCount: totalTasks

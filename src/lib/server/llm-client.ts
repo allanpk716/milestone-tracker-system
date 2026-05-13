@@ -6,6 +6,10 @@
  * LLM_API_KEY is never logged or included in SSE responses.
  */
 
+import { createLogger } from './logger.js';
+
+const logger = createLogger('llm-client');
+
 const DEFAULT_BASE_URL = 'https://api.openai.com/v1';
 const DEFAULT_MODEL = 'gpt-4o-mini';
 const TIMEOUT_MS = 30_000;
@@ -32,7 +36,7 @@ export class LlmClient {
 	async *chatCompletionStream(systemPrompt: string, userMessage: string): AsyncGenerator<string> {
 		const url = `${this.baseUrl}/chat/completions`;
 
-		console.info('[llm-client] Request:', {
+		logger.info('Request', {
 			url,
 			model: this.model,
 			systemPromptLength: systemPrompt.length,

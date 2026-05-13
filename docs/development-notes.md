@@ -180,6 +180,86 @@ npm test           # 单次运行
 npm run test:watch  # 监视模式
 ```
 
+## 日志相关
+
+### createLogger 使用模式
+
+```typescript
+import { createLogger } from '$lib/server/logger';
+
+const log = createLogger('my-module');
+log.info('Server started', { port: 3000 });
+log.error('Failed to connect', { host: 'db.example.com' });
+```
+
+每个模块创建独立的 logger 实例，`module` 参数出现在日志行中用于区分来源。
+
+### 日志级别控制
+
+通过 `LOG_LEVEL` 环境变量设置，支持 `debug`、`info`、`warn`、`error`（默认 `info`）。低于设定级别的日志不会产生任何 I/O。
+
+### 日志文件位置与轮转
+
+- 文件路径：`logs/app-YYYY-MM-DD.log`（相对于 cwd）
+- 按日期自动切换文件
+- 启动时自动清理 7 天前的旧日志（通过 `pruneOldLogs` 函数）
+
+### _resetLoggerState（仅测试用）
+
+`_resetLoggerState()` 重置 logger 单例状态（初始化标记和日志目录），确保测试之间互不干扰。此函数仅应在测试代码中调用。
+
+### 密钥脱敏
+
+日志模块自动脱敏 meta 中包含敏感键名（`api_key`、`password`、`secret`、`authorization`、`token`）或敏感值模式（如 `bearer xxx`）的内容。不需要手动处理。
+
+## 部署相关
+
+### bat 脚本编码
+
+所有 `.bat` 脚本以 `chcp 65001 > nul 2>&1` 开头，将控制台代码页切换为 UTF-8，确保中文输出正确显示。
+
+### 部署配置加载顺序
+
+`deploy.bat` 按以下顺序查找配置文件：
+1. 项目根目录 `deploy-config.bat`
+2. `scripts/config/deploy-config.bat`
+
+找到第一个即停止查找，未找到则报错退出。
+
+### NSSM 远程管理
+
+部署脚本通过 SSH 远程执行 NSSM 命令管理 Windows 服务：
+- `nssm restart <SERVICE_NAME>` — 重启服务
+- `nssm status <SERVICE_NAME>` — 查看状态
+- 默认服务名：`MilestoneTracker`
+
+### verify-no-secrets.sh
+
+`scripts/verify-no-secrets.sh` 扫描 Git 跟踪文件中的敏感信息（API 密钥、密码赋值、私钥标记等）。自动排除 `.env.example`、注释行和占位符值（`changeme`、`xxx`、`your-` 等）。支持 `--fail-fast` 模式。
+
+## E2E 测试相关
+
+### 独立配置
+
+E2E 测试使用独立的 Vitest 配置文件 `tests/e2e/e2e.config.ts`，与单元测试隔离：
+- 运行环境：`node`（非 jsdom）
+- 超时：单测 15 秒，钩子 10 秒
+- 运行命令：`npm run test:e2e`
+
+### 环境变量配置
+
+通过环境变量控制 E2E 测试目标（均提供默认值）：
+
+| 环境变量 | 默认值 | 说明 |
+|----------|--------|------|
+| `E2E_BASE_URL` | `http://172.18.200.47:30002` | 目标服务器地址 |
+| `E2E_ADMIN_PASSWORD` | `admin123` | 管理员密码 |
+| `E2E_API_KEY` | `dev-api-key-2025` | Agent API 密钥 |
+
+### 使用原生 fetch
+
+E2E 测试使用 Node 22 内置的 `fetch` API（`tests/e2e/helpers.ts`），无需额外 HTTP 库。提供 `api()` 函数封装认证请求和 JSON 解析，`login()` 函数处理登录流程。
+
 ## 常见问题
 
 ### Q: 修改 ADMIN_PASSWORD 后为什么所有用户都登出了？

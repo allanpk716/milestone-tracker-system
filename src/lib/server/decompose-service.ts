@@ -11,6 +11,7 @@
  */
 
 import { LlmClient } from './llm-client.js';
+import { createLogger } from './logger.js';
 import {
 	decomposeModuleSchema,
 	type DecomposeModule,
@@ -21,6 +22,8 @@ import {
 } from '$lib/schemas/decompose.js';
 
 // ── System prompt ────────────────────────────────────────────────────────────
+
+const logger = createLogger('decompose-service');
 
 const SYSTEM_PROMPT = `你是一个专业的项目管理助手。你的任务是将需求文档拆解为结构化的模块和任务。
 
@@ -189,7 +192,7 @@ export async function* streamDecompose(
 							message: `JSON parse error: unparseable content`
 						};
 						yield event;
-						console.info('[decompose-service] JSON parse error: unparseable content');
+						logger.warn('JSON parse error: unparseable content');
 						continue;
 					}
 				}
@@ -213,7 +216,7 @@ export async function* streamDecompose(
 							message: `Zod validation failed: ${detail}`
 						};
 						yield event;
-						console.info('[decompose-service] Zod validation failed for module:', detail);
+						logger.warn('Zod validation failed for module', { detail });
 					}
 				}
 			}
@@ -279,7 +282,7 @@ export async function* streamDecompose(
 			message: err.message
 		};
 		yield event;
-		console.info('[decompose-service] Stream error:', err.message);
+		logger.warn('Stream error', { error: err.message });
 	} finally {
 		const doneEvent: DecomposeDoneEvent = {
 			type: 'done',
@@ -287,6 +290,6 @@ export async function* streamDecompose(
 			errors: errorCount
 		};
 		yield doneEvent;
-		console.info('[decompose-service] Stream complete:', { total: moduleIndex, errors: errorCount });
+		logger.info('Stream complete', { total: moduleIndex, errors: errorCount });
 	}
 }

@@ -2,6 +2,10 @@
 # ── Project skill (contains deployment secrets)
 .agents/
 
+# ── Deployment secrets ──
+deploy-config.bat
+scripts/config/deploy-config.bat
+
 # ── GSD baseline (auto-generated) ──
 .gsd
 .gsd-id
@@ -33,5 +37,6 @@ coverage/
 .cache/
 tmp/
 data/
+logs/
 .svelte-kit/
 drizzle/

@@ -239,6 +239,61 @@ API Key：
 
 CLI 内置并发锁机制，防止多个 Agent 同时操作同一任务。锁文件位于系统临时目录，默认超时 5 秒，--force 参数可跳过锁检查。
 
+## 日志系统
+
+系统使用零外部依赖的结构化日志模块 `src/lib/server/logger.ts`。
+
+### 设计
+
+- **工厂模式**：`createLogger(module)` 返回 `{ debug, info, warn, error }` 四个方法
+- **双通道输出**：每条日志同时写入 stdout（按级别路由到对应 console 方法）和日志文件
+- **日志级别**：`debug < info < warn < error`，通过 `LOG_LEVEL` 环境变量控制（默认 `info`）
+- **日志文件**：按日滚动，路径 `logs/app-YYYY-MM-DD.log`
+- **自动清理**：启动时删除超过 7 天的旧日志文件
+
+### 格式
+
+```
+[ISO_TIMESTAMP] [LEVEL] [module] message {meta JSON}
+```
+
+### 密钥脱敏
+
+日志模块内置密钥脱敏机制，通过两种方式检测敏感信息：
+1. **键名匹配**：meta 对象的 key 包含 `api_key`、`password`、`secret`、`authorization`、`token` 等模式时，值替换为 `[REDACTED]`
+2. **值匹配**：meta 对象的字符串值匹配 `bearer \S+` 等模式时，同样脱敏
+
+### 优雅降级
+
+日志文件写入失败时仅向 stdout 输出警告，不会中断应用运行。
+
+## 健康检查
+
+系统提供 `GET /api/health` 端点用于运行状态探测。
+
+### 响应格式
+
+```json
+{
+  "status": "ok",
+  "version": "0.1.0",
+  "uptime": 12345.67,
+  "db": "connected"
+}
+```
+
+| 字段 | 说明 |
+|------|------|
+| `status` | 固定值 `"ok"` |
+| `version` | 来自 package.json 的应用版本 |
+| `uptime` | 进程运行秒数 |
+| `db` | 数据库状态：`"connected"` 或 `"error"` |
+
+### 实现
+
+- 通过 `SELECT 1` 轻量级探针检测数据库连接
+- 数据库探测逻辑独立导出为 `healthCheck(database)` 函数，便于测试注入 mock
+
 ## 构建与部署
 
 ### adapter-node
@@ -253,3 +308,34 @@ CLI 内置并发锁机制，防止多个 Agent 同时操作同一任务。锁文
 使用 @tailwindcss/vite Vite 插件，无需 tailwind.config 文件。样式入口在 src/app.css：
 
     @import "tailwindcss";
+
+## 部署架构
+
+系统使用 `scripts/deploy.bat` 自动化部署到远程 Windows 服务器，通过 NSSM 管理为系统服务。
+
+### 部署流程（6 步）
+
+```
+[1/6] 预检查 → 加载配置、验证 SSH 和 Node.js
+[2/6] 构建   → npm run build
+[3/6] 裁剪   → npm prune --production
+[4/6] 推送   → SCP 推送 build/ + node_modules/ + package.json
+[5/6] 重启   → NSSM restart（通过 SSH）
+[6/6] 验证   → 健康检查（带重试）
+```
+
+### 配置管理
+
+部署配置文件 `deploy-config.bat`（从 `deploy-config.bat.example` 复制），支持 SSH 别名或手动指定主机/端口/密钥路径。
+
+### 远程目录结构
+
+```
+REMOTE_PATH/
+├── build/           # SvelteKit 构建产物
+├── node_modules/    # 生产依赖
+├── package.json
+├── logs/            # 应用日志（日志系统写入）
+│   └── app-YYYY-MM-DD.log
+└── data/            # SQLite 数据库文件
+```
