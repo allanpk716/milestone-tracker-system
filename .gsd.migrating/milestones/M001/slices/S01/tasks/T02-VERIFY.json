@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "taskId": "T02",
+  "unitId": "M001/S01/T02",
+  "timestamp": 1778578785353,
+  "passed": false,
+  "discoverySource": "task-plan",
+  "checks": [
+    {
+      "command": "cd C:/WorkSpace/agent/milestone-tracker-system/.gsd/worktrees/M001",
+      "exitCode": 0,
+      "durationMs": 115,
+      "verdict": "pass"
+    },
+    {
+      "command": "npx drizzle-kit push",
+      "exitCode": 1,
+      "durationMs": 582,
+      "verdict": "fail"
+    },
+    {
+      "command": "npm test -- --grep \"db schema\"",
+      "exitCode": 1,
+      "durationMs": 957,
+      "verdict": "fail"
+    }
+  ],
+  "retryAttempt": 1,
+  "maxRetries": 2
+}

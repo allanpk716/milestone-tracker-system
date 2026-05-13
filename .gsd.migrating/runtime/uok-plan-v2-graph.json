@@ -1,0 +1,499 @@
+{
+  "compiledAt": "2026-05-13T00:39:45.935Z",
+  "milestoneId": "M001",
+  "pipeline": {
+    "clarifyRoundLimit": 3,
+    "researchSynthesized": false,
+    "draftContextIncluded": false,
+    "finalizedContextIncluded": true,
+    "sourcePhase": "completing-milestone"
+  },
+  "nodes": [
+    {
+      "id": "execute-task:M001:S01:T01",
+      "kind": "unit",
+      "dependsOn": [],
+      "writes": [
+        "package.json",
+        "svelte.config.js",
+        "vite.config.ts",
+        "drizzle.config.ts",
+        "tsconfig.json",
+        "vitest.config.ts",
+        "src/app.html",
+        "src/app.css",
+        ".env.example",
+        "src/lib/db/index.ts",
+        "src/lib/db/schema.ts",
+        "src/routes/+layout.svelte",
+        "src/routes/+page.svelte",
+        "src/lib/scaffold.test.ts",
+        ".gitignore"
+      ],
+      "metadata": {
+        "unitType": "execute-task",
+        "unitId": "M001.S01.T01",
+        "title": "Scaffolded SvelteKit 5 project with Drizzle ORM, TailwindCSS 4, Zod, and Vitest — dev server, build, and tests all pass",
+        "status": "complete"
+      }
+    },
+    {
+      "id": "execute-task:M001:S01:T02",
+      "kind": "unit",
+      "dependsOn": [
+        "execute-task:M001:S01:T01"
+      ],
+      "writes": [
+        "src/lib/db/schema.ts",
+        "src/lib/db/schema.test.ts"
+      ],
+      "metadata": {
+        "unitType": "execute-task",
+        "unitId": "M001.S01.T02",
+        "title": "Defined Drizzle ORM schema for Milestone/Module/Task tables with WAL mode, indexes, FK cascades, and 22 passing CRUD tests",
+        "status": "complete"
+      }
+    },
+    {
+      "id": "execute-task:M001:S01:T03",
+      "kind": "unit",
+      "dependsOn": [
+        "execute-task:M001:S01:T02"
+      ],
+      "writes": [
+        "src/lib/schemas/common.ts",
+        "src/lib/schemas/milestone.ts",
+        "src/lib/schemas/module.ts",
+        "src/lib/schemas/task.ts",
+        "src/lib/schemas/auth.ts",
+        "src/lib/schemas/index.ts",
+        "src/lib/types.ts",
+        "src/lib/schemas/schemas.test.ts"
+      ],
+      "metadata": {
+        "unitType": "execute-task",
+        "unitId": "M001.S01.T03",
+        "title": "Defined comprehensive Zod schemas for all API contracts (milestone, module, task, auth, common) with 94 passing validation tests",
+        "status": "complete"
+      }
+    },
+    {
+      "id": "execute-task:M001:S01:T04",
+      "kind": "unit",
+      "dependsOn": [
+        "execute-task:M001:S01:T03"
+      ],
+      "writes": [
+        "src/lib/server/auth.ts",
+        "src/hooks.server.ts",
+        "src/routes/api/auth/login/+server.ts",
+        "src/routes/api/auth/logout/+server.ts",
+        "src/routes/login/+page.svelte",
+        "src/app.d.ts",
+        "src/lib/server/auth.test.ts"
+      ],
+      "metadata": {
+        "unitType": "execute-task",
+        "unitId": "M001.S01.T04",
+        "title": "Implemented dual auth (cookie session + Bearer token) with login/logout API, auth guard hook, Chinese login page, and 38 passing tests",
+        "status": "complete"
+      }
+    },
+    {
+      "id": "execute-task:M001:S01:T05",
+      "kind": "unit",
+      "dependsOn": [
+        "execute-task:M001:S01:T04"
+      ],
+      "writes": [
+        "src/lib/server/milestone-service.ts",
+        "src/lib/server/module-service.ts",
+        "src/lib/server/task-service.ts",
+        "src/routes/api/milestones/+server.ts",
+        "src/routes/api/milestones/[id]/+server.ts",
+        "src/routes/api/milestones/[id]/modules/+server.ts",
+        "src/routes/api/modules/[id]/+server.ts",
+        "src/routes/api/tasks/+server.ts",
+        "src/routes/api/tasks/[id]/+server.ts",
+        "src/routes/api/tasks/[id]/claim/+server.ts",
+        "src/routes/api/tasks/[id]/progress/+server.ts",
+        "src/routes/api/tasks/[id]/complete/+server.ts",
+        "src/lib/server/milestone-service.test.ts",
+        "src/lib/server/module-service.test.ts",
+        "src/lib/server/task-service.test.ts"
+      ],
+      "metadata": {
+        "unitType": "execute-task",
+        "unitId": "M001.S01.T05",
+        "title": "Implemented milestone/module/task CRUD API endpoints with Zod validation, auth, and 51 passing integration tests",
+        "status": "complete"
+      }
+    },
+    {
+      "id": "execute-task:M001:S01:T06",
+      "kind": "unit",
+      "dependsOn": [
+        "execute-task:M001:S01:T05"
+      ],
+      "writes": [],
+      "metadata": {
+        "unitType": "execute-task",
+        "unitId": "M001.S01.T06",
+        "title": "Build milestone overview list page and detail page skeleton",
+        "status": "complete"
+      }
+    },
+    {
+      "id": "complete-slice:M001:S01",
+      "kind": "verification",
+      "dependsOn": [
+        "execute-task:M001:S01:T06"
+      ],
+      "metadata": {
+        "unitType": "complete-slice",
+        "unitId": "M001.S01",
+        "title": "S01",
+        "status": "complete"
+      }
+    },
+    {
+      "id": "execute-task:M001:S02:T01",
+      "kind": "unit",
+      "dependsOn": [],
+      "writes": [
+        "src/lib/schemas/decompose.ts",
+        "src/lib/server/llm-client.ts",
+        "src/lib/server/decompose-service.ts",
+        "src/lib/server/llm-client.test.ts",
+        "src/lib/server/decompose-service.test.ts",
+        "src/lib/schemas/index.ts"
+      ],
+      "metadata": {
+        "unitType": "execute-task",
+        "unitId": "M001.S02.T01",
+        "title": "Created LLM client (fetch-based SSE streaming), decompose Zod schemas, incremental JSON parser, and decompose service with full test coverage (35 new tests passing)",
+        "status": "complete"
+      }
+    },
+    {
+      "id": "execute-task:M001:S02:T02",
+      "kind": "unit",
+      "dependsOn": [
+        "execute-task:M001:S02:T01"
+      ],
+      "writes": [
+        "src/routes/api/milestones/[id]/decompose/+server.ts",
+        "src/lib/server/decompose-endpoint.test.ts"
+      ],
+      "metadata": {
+        "unitType": "execute-task",
+        "unitId": "M001.S02.T02",
+        "title": "Created POST /api/milestones/:id/decompose SSE endpoint with precondition validation and 8 tests",
+        "status": "complete"
+      }
+    },
+    {
+      "id": "execute-task:M001:S02:T03",
+      "kind": "unit",
+      "dependsOn": [
+        "execute-task:M001:S02:T02"
+      ],
+      "writes": [
+        "src/lib/client/sse-client.ts",
+        "src/lib/components/DecomposeStream.svelte",
+        "src/routes/(app)/milestones/[id]/+page.svelte"
+      ],
+      "metadata": {
+        "unitType": "execute-task",
+        "unitId": "M001.S02.T03",
+        "title": "Created POST-based SSE client, DecomposeStream component with progressive module rendering, and integrated into milestone detail page",
+        "status": "complete"
+      }
+    },
+    {
+      "id": "complete-slice:M001:S02",
+      "kind": "verification",
+      "dependsOn": [
+        "execute-task:M001:S02:T03"
+      ],
+      "metadata": {
+        "unitType": "complete-slice",
+        "unitId": "M001.S02",
+        "title": "S02",
+        "status": "complete"
+      }
+    },
+    {
+      "id": "execute-task:M001:S03:T01",
+      "kind": "unit",
+      "dependsOn": [],
+      "writes": [
+        "src/lib/schemas/confirm.ts",
+        "src/lib/schemas/index.ts",
+        "src/lib/server/confirm-service.ts",
+        "src/lib/server/compare-service.ts",
+        "src/routes/api/milestones/[id]/confirm/+server.ts",
+        "src/routes/api/milestones/[id]/compare/+server.ts",
+        "src/lib/server/confirm-service.test.ts",
+        "src/lib/server/compare-service.test.ts",
+        "src/lib/server/confirm-endpoint.test.ts",
+        "src/lib/server/compare-endpoint.test.ts"
+      ],
+      "metadata": {
+        "unitType": "execute-task",
+        "unitId": "M001.S03.T01",
+        "title": "Built confirm service (atomic module/task writes + milestone activation), compare service (LLM streaming SSE), both API endpoints, and 36 passing tests",
+        "status": "complete"
+      }
+    },
+    {
+      "id": "execute-task:M001:S03:T02",
+      "kind": "unit",
+      "dependsOn": [
+        "execute-task:M001:S03:T01"
+      ],
+      "writes": [
+        "src/lib/stores/decompose-state.svelte.ts",
+        "src/lib/components/MdViewer.svelte",
+        "src/lib/components/DecomposeEditor.svelte",
+        "src/routes/(app)/milestones/[id]/preview/+page.svelte",
+        "src/routes/(app)/milestones/[id]/preview/+page.server.ts",
+        "src/lib/components/DecomposeStream.svelte",
+        "src/routes/(app)/milestones/[id]/+page.svelte"
+      ],
+      "metadata": {
+        "unitType": "execute-task",
+        "unitId": "M001.S03.T02",
+        "title": "Built preview/edit split page with MD viewer, TOC navigation, module editor, confirm flow, and shared decompose state",
+        "status": "complete"
+      }
+    },
+    {
+      "id": "execute-task:M001:S03:T03",
+      "kind": "unit",
+      "dependsOn": [
+        "execute-task:M001:S03:T02"
+      ],
+      "writes": [
+        "src/lib/client/sse-client.ts",
+        "src/lib/components/CompareSuggestions.svelte",
+        "src/routes/(app)/milestones/[id]/preview/+page.svelte",
+        "src/lib/components/DecomposeEditor.svelte"
+      ],
+      "metadata": {
+        "unitType": "execute-task",
+        "unitId": "M001.S03.T03",
+        "title": "Wired confirm flow with CompareSuggestions SSE panel, generic SSE client, edge-case guards, and verified build",
+        "status": "complete"
+      }
+    },
+    {
+      "id": "complete-slice:M001:S03",
+      "kind": "verification",
+      "dependsOn": [
+        "execute-task:M001:S03:T03"
+      ],
+      "metadata": {
+        "unitType": "complete-slice",
+        "unitId": "M001.S03",
+        "title": "S03",
+        "status": "complete"
+      }
+    },
+    {
+      "id": "execute-task:M001:S04:T01",
+      "kind": "unit",
+      "dependsOn": [],
+      "writes": [
+        "src/routes/(app)/milestones/[id]/kanban/+page.server.ts",
+        "src/lib/server/task-service.ts",
+        "src/lib/schemas/task.ts",
+        "src/lib/schemas/index.ts",
+        "src/routes/api/tasks/[id]/+server.ts",
+        "src/routes/(app)/milestones/[id]/+page.svelte",
+        "src/lib/server/task-service.test.ts",
+        "src/lib/schemas/schemas.test.ts",
+        "src/lib/types.ts"
+      ],
+      "metadata": {
+        "unitType": "execute-task",
+        "unitId": "M001.S04.T01",
+        "title": "Added kanban server data loader with zombie detection, updateTask service/PUT endpoint, admin assignee clearing, and navigation link",
+        "status": "complete"
+      }
+    },
+    {
+      "id": "execute-task:M001:S04:T02",
+      "kind": "unit",
+      "dependsOn": [
+        "execute-task:M001:S04:T01"
+      ],
+      "writes": [
+        "src/routes/(app)/milestones/[id]/kanban/+page.svelte",
+        "src/lib/components/KanbanModuleCard.svelte",
+        "src/lib/components/KanbanTaskCard.svelte",
+        "src/lib/components/TaskRefChip.svelte"
+      ],
+      "metadata": {
+        "unitType": "execute-task",
+        "unitId": "M001.S04.T02",
+        "title": "Built kanban page with collapsible module cards, task detail cards, zombie highlighting, right-click admin menu, and #N reference expansion chips",
+        "status": "complete"
+      }
+    },
+    {
+      "id": "execute-task:M001:S04:T03",
+      "kind": "unit",
+      "dependsOn": [
+        "execute-task:M001:S04:T02"
+      ],
+      "writes": [
+        "src/lib/stores/kanban-state.svelte.ts",
+        "src/lib/components/TaskContextMenu.svelte",
+        "src/lib/components/TaskEditModal.svelte",
+        "src/lib/components/KanbanTaskCard.svelte",
+        "src/routes/(app)/milestones/[id]/kanban/+page.svelte"
+      ],
+      "metadata": {
+        "unitType": "execute-task",
+        "unitId": "M001.S04.T03",
+        "title": "Extracted context menu and edit modal into shared state store and dedicated components with status-aware admin actions",
+        "status": "complete"
+      }
+    },
+    {
+      "id": "complete-slice:M001:S04",
+      "kind": "verification",
+      "dependsOn": [
+        "execute-task:M001:S04:T03"
+      ],
+      "metadata": {
+        "unitType": "complete-slice",
+        "unitId": "M001.S04",
+        "title": "S04",
+        "status": "complete"
+      }
+    },
+    {
+      "id": "execute-task:M001:S05:T01",
+      "kind": "unit",
+      "dependsOn": [],
+      "writes": [
+        "packages/cli/package.json",
+        "packages/cli/tsconfig.json",
+        "packages/cli/vitest.config.ts",
+        "packages/cli/src/config.ts",
+        "packages/cli/src/client.ts",
+        "packages/cli/src/commands/status.ts",
+        "packages/cli/src/index.ts",
+        "packages/cli/src/__tests__/config.test.ts",
+        "packages/cli/src/__tests__/client.test.ts"
+      ],
+      "metadata": {
+        "unitType": "execute-task",
+        "unitId": "M001.S05.T01",
+        "title": "Created mt-cli package with config resolution, HTTP client with Bearer auth and Chinese error messages, and status command",
+        "status": "complete"
+      }
+    },
+    {
+      "id": "execute-task:M001:S05:T02",
+      "kind": "unit",
+      "dependsOn": [
+        "execute-task:M001:S05:T01"
+      ],
+      "writes": [
+        "packages/cli/src/types.ts",
+        "packages/cli/src/utils/id.ts",
+        "packages/cli/src/utils/format.ts",
+        "packages/cli/src/commands/list.ts",
+        "packages/cli/src/commands/claim.ts",
+        "packages/cli/src/commands/progress.ts",
+        "packages/cli/src/commands/complete.ts",
+        "packages/cli/src/commands/show.ts",
+        "packages/cli/src/commands/mine.ts",
+        "packages/cli/src/index.ts",
+        "packages/cli/src/__tests__/commands.test.ts"
+      ],
+      "metadata": {
+        "unitType": "execute-task",
+        "unitId": "M001.S05.T02",
+        "title": "Implemented all 6 task commands (list, claim, progress, complete, show, mine) with Chinese output, #N/TASK-{seq} ID resolution, and LLM-friendly error messages",
+        "status": "complete"
+      }
+    },
+    {
+      "id": "execute-task:M001:S05:T03",
+      "kind": "unit",
+      "dependsOn": [
+        "execute-task:M001:S05:T02"
+      ],
+      "writes": [
+        "packages/cli/src/__tests__/concurrency.test.ts",
+        "packages/cli/src/__tests__/error-output.test.ts"
+      ],
+      "metadata": {
+        "unitType": "execute-task",
+        "unitId": "M001.S05.T03",
+        "title": "Added concurrent claim verification tests (15) and error output formatting tests (29) proving optimistic lock 409 behavior and Chinese error messages across all HTTP status codes",
+        "status": "complete"
+      }
+    },
+    {
+      "id": "complete-slice:M001:S05",
+      "kind": "verification",
+      "dependsOn": [
+        "execute-task:M001:S05:T03"
+      ],
+      "metadata": {
+        "unitType": "complete-slice",
+        "unitId": "M001.S05",
+        "title": "S05",
+        "status": "complete"
+      }
+    },
+    {
+      "id": "execute-task:M001:S06:T01",
+      "kind": "unit",
+      "dependsOn": [],
+      "writes": [
+        "src/lib/server/lifecycle.test.ts"
+      ],
+      "metadata": {
+        "unitType": "execute-task",
+        "unitId": "M001.S06.T01",
+        "title": "Created lifecycle.test.ts with 27 end-to-end integration tests covering the full milestone lifecycle",
+        "status": "complete"
+      }
+    },
+    {
+      "id": "execute-task:M001:S06:T02",
+      "kind": "unit",
+      "dependsOn": [
+        "execute-task:M001:S06:T01"
+      ],
+      "writes": [
+        "src/lib/server/lifecycle.test.ts"
+      ],
+      "metadata": {
+        "unitType": "execute-task",
+        "unitId": "M001.S06.T02",
+        "title": "Verified full build health and cross-slice regression: all 336 tests pass, no TypeScript errors, no TODO/FIXME placeholders, CLI package builds clean",
+        "status": "complete"
+      }
+    },
+    {
+      "id": "complete-slice:M001:S06",
+      "kind": "verification",
+      "dependsOn": [
+        "execute-task:M001:S06:T02"
+      ],
+      "metadata": {
+        "unitType": "complete-slice",
+        "unitId": "M001.S06",
+        "title": "S06",
+        "status": "complete"
+      }
+    }
+  ]
+}

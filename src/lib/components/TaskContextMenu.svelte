@@ -4,7 +4,7 @@
 		closeContextMenu,
 		openEditModal
 	} from '$lib/stores/kanban-state.svelte.js';
-	import { toast } from '$lib/stores/toast.js';
+	import { toast } from '$lib/stores/toast.svelte.js';
 
 	type TaskStatus = 'todo' | 'in-progress' | 'blocked' | 'review' | 'done' | 'skipped';
 

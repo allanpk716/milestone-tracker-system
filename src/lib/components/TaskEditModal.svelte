@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { getEditModal, closeEditModal } from '$lib/stores/kanban-state.svelte.js';
-	import { toast } from '$lib/stores/toast.js';
+	import { toast } from '$lib/stores/toast.svelte.js';
 
 	let modal = $derived(getEditModal());
 

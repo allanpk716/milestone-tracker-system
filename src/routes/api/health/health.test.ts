@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import Database from 'better-sqlite3';
 import { drizzle } from 'drizzle-orm/better-sqlite3';
-import { healthCheck, type DbClient, type HealthResponse } from './+server.js';
+import { healthCheck, type DbClient, type HealthResponse } from './health-utils.js';
 
 /**
  * Tests for the health check endpoint logic.

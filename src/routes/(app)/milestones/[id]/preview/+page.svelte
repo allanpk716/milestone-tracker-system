@@ -9,7 +9,7 @@
 		clearPendingModules,
 		type EditableModule
 	} from '$lib/stores/decompose-state.svelte.js';
-	import { toast } from '$lib/stores/toast.js';
+	import { toast } from '$lib/stores/toast.svelte.js';
 
 	let { data } = $props();
 	let milestone = $derived(data.milestone);

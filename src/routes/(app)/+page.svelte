@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { toast } from '$lib/stores/toast.js';
+	import { toast } from '$lib/stores/toast.svelte.js';
 	import MilestoneCard from '$lib/components/MilestoneCard.svelte';
 
 	interface Milestone {

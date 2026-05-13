@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "taskId": "T05",
+  "unitId": "M001/S01/T05",
+  "timestamp": 1778579484287,
+  "passed": false,
+  "discoverySource": "task-plan",
+  "checks": [
+    {
+      "command": "cd C:/WorkSpace/agent/milestone-tracker-system/.gsd/worktrees/M001",
+      "exitCode": 0,
+      "durationMs": 113,
+      "verdict": "pass"
+    },
+    {
+      "command": "npm test -- --grep \"api\"",
+      "exitCode": 1,
+      "durationMs": 956,
+      "verdict": "fail"
+    }
+  ],
+  "retryAttempt": 1,
+  "maxRetries": 2
+}

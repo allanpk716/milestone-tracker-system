@@ -1,0 +1,44 @@
+{
+  "version": 1,
+  "sessions": {
+    "0f2dbe3c-235c-4a1e-bb53-a213c4936d83": {
+      "summary": {
+        "totalCommands": 289,
+        "totalInput": 5898504,
+        "totalOutput": 12470,
+        "totalSaved": 5886264,
+        "avgSavingsPct": 99.79248975672476,
+        "totalTimeMs": 3678563,
+        "avgTimeMs": 12728
+      },
+      "createdAt": "2026-05-12T12:39:32.124Z",
+      "updatedAt": "2026-05-12T12:47:20.438Z"
+    },
+    "9d48a961-e87b-4f6b-a040-67616038d7f6": {
+      "summary": {
+        "totalCommands": 262,
+        "totalInput": 5807154,
+        "totalOutput": 12120,
+        "totalSaved": 5795264,
+        "avgSavingsPct": 99.79525254539487,
+        "totalTimeMs": 3634728,
+        "avgTimeMs": 13873
+      },
+      "createdAt": "2026-05-12T10:24:14.189Z",
+      "updatedAt": "2026-05-12T10:31:23.215Z"
+    },
+    "30adbd25-1040-4206-9557-1e629e503bf7": {
+      "summary": {
+        "totalCommands": 258,
+        "totalInput": 5803188,
+        "totalOutput": 8190,
+        "totalSaved": 5795228,
+        "avgSavingsPct": 99.86283401468296,
+        "totalTimeMs": 3618432,
+        "avgTimeMs": 14024
+      },
+      "createdAt": "2026-05-12T08:40:44.862Z",
+      "updatedAt": "2026-05-12T08:40:52.910Z"
+    }
+  }
+}
