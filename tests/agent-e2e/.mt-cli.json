@@ -1,0 +1,6 @@
+{
+  "serverUrl": "http://127.0.0.1:5199",
+  "milestoneId": "MS-AGENT-TEST",
+  "key": "test-agent-key-e2e",
+  "agentName": "test-agent"
+}

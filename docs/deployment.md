@@ -57,6 +57,7 @@ copy scripts\config\deploy-config.bat.example deploy-config.bat
 | `HEALTH_CHECK_RETRIES` | 健康检查重试次数 | `3` |
 | `HEALTH_CHECK_INTERVAL` | 重试间隔（秒） | `2` |
 | `AUTO_RESTART` | 部署后自动重启 | `yes` |
+| `NSSM_PATH` | 远程 NSSM 可执行文件路径 | `C:\WorkSpace\milestone-tracker\nssm.exe` |
 
 > `deploy-config.bat` 已被 `.gitignore` 排除。
 
@@ -123,6 +124,31 @@ scripts\install-service.bat
 | stdout | `logs\milestone-tracker.out.log` | 标准输出 |
 | stderr | `logs\milestone-tracker.err.log` | 标准错误 |
 
+### NSSM 启动脚本 (start.bat)
+
+`scripts/start.bat` 是 NSSM 调用的启动脚本，替代直接指向 `node.exe`：
+
+```bat
+chcp 65001 >nul 2>&1
+cd /d "C:\WorkSpace\milestone-tracker"
+set "NODE_EXE=C:\Program Files\nodejs\node.exe"
+"%NODE_EXE%" --import dotenv/config build/index.js
+```
+
+**关键特性：**
+- `chcp 65001` — UTF-8 代码页，确保中文日志正确输出
+- `--import dotenv/config` — dotenv v17+ ESM 加载方式（替代 `require('dotenv').config()`，后者在 ESM 模式下不可用）
+
+### NSSM_PATH 配置
+
+`deploy.bat` 使用 `NSSM_PATH` 变量指定远程服务器上 NSSM 的完整路径：
+
+```bat
+set NSSM_PATH=C:\WorkSpace\milestone-tracker\nssm.exe
+```
+
+**为什么需要 NSSM_PATH：** 远程服务器上 `nssm` 不在系统 PATH 中，直接调用 `nssm` 会失败。`NSSM_PATH` 可在 `deploy-config.bat` 中配置为 NSSM 的实际安装路径。所有 NSSM 命令（restart、status、stop）均使用此变量。
+
 ## 日志系统
 
 ### 应用日志
@@ -181,6 +207,8 @@ curl http://172.18.200.47:30002/api/health
 
 部署后运行端到端测试验证服务功能：
 
+### API E2E 测试
+
 ```bash
 npm run test:e2e
 ```
@@ -199,7 +227,27 @@ npm run test:e2e
 | `E2E_ADMIN_PASSWORD` | `admin123` | 管理员密码 |
 | `E2E_API_KEY` | `dev-api-key-2025` | API 密钥 |
 
-## /release 技能
+### Agent E2E 测试
+
+```bash
+npm run test:agent-e2e
+```
+
+Agent E2E 测试通过 `child_process.spawn` 调用编译后的 `mt-cli` 二进制文件，覆盖全部 **11 个 CLI 命令、38 个测试用例**：
+
+- 全局命令：`health`, `login`, `status`
+- 里程碑命令：`create-milestone`, `list-milestones`, `show-milestone`
+- 任务命令：`create-task`, `list-tasks`, `update-task`, `show-task`
+- 模块命令：`list-modules`
+
+**测试架构：**
+- `global-setup.ts` — 创建临时数据库、种子数据、启动测试服务器
+- 测试文件通过 `spawn` 调用 CLI，传递 `--json` 标志获取结构化输出
+- `global-teardown.ts` — 停止测试服务器、清理临时文件和数据库
+
+测试结果以 JSON 格式持久化到 `tests/e2e/results.json`。
+
+## /release 技能（5 阶段流水线）
 
 使用内置的 `/release` 技能执行完整的发布流程：
 
@@ -207,13 +255,62 @@ npm run test:e2e
 /release
 ```
 
-技能会自动执行：
-1. 检查 Git 工作区是否干净（未提交变更会中止）
-2. 运行 `scripts\deploy.bat` 完成部署
-3. 运行 `npm run test:e2e` 执行 E2E 测试
-4. 输出发布报告（Git 状态、部署阶段、测试结果）
+技能按 **5 阶段门控流水线** 执行，每阶段必须通过才进入下一阶段：
 
-任一步骤失败即停止，不会继续后续步骤。
+```
+Phase 1: Preflight   — 验证配置、Git 工作区干净、构建通过
+Phase 2: Audit       — 运行 verify-no-secrets.sh 扫描敏感信息
+Phase 3: Version     — 交互式版本号升级、Git tag 创建与推送
+Phase 4: Deploy      — 委托 deploy.bat 执行 6 阶段部署
+Phase 5: Verify      — 独立健康检查 + 服务状态确认 + 部署报告
+```
+
+### 各阶段详情
+
+| 阶段 | 名称 | 说明 | 失败行为 |
+|------|------|------|----------|
+| 1 | Preflight | 检查 deploy-config.bat 存在、Git 工作区干净、`npm run build` 通过 | **停止**，提示修复 |
+| 2 | Security Audit | `bash scripts/verify-no-secrets.sh` 扫描 Git 跟踪文件 | **阻止部署**，输出发现 |
+| 3 | Version Tag | 读取 package.json 版本，检查/创建 Git tag，推送 commit + tag | **停止**，提示手动处理 |
+| 4 | Deploy | 通过 `cmd.exe /c scripts\\deploy.bat` 执行实际部署 | **不自动重试**，输出诊断建议 |
+| 5 | Verify | curl 健康检查 + SSH 查询 NSSM 服务状态 | **警告**，报告响应供手动排查 |
+
+### deploy.bat 执行方式
+
+`/release` 通过 `cmd.exe /c` 调用 deploy.bat，**不在 Git Bash 中直接运行**（Git Bash 非 TTY 环境下 `@echo off` + `chcp 65001` 会吞掉所有 stdout）。如果 cmd.exe 不可用，则回退到逐阶段 bash 命令执行。
+
+### 回滚
+
+如果部署失败：
+1. 检查服务状态：`ssh <SSH_ALIAS> "<NSSM_PATH> status <SERVICE_NAME>"`
+2. 查看错误日志：`ssh <SSH_ALIAS> "powershell -Command \"Get-Content <REMOTE_PATH>\\logs\\milestone-tracker.err.log -Tail 20\""`
+3. 重启服务：`ssh <SSH_ALIAS> "<NSSM_PATH> restart <SERVICE_NAME>"`
+4. 回退版本：`git checkout v{PREV_VERSION} -- package.json && npm run build`
+
+## 敏感信息扫描
+
+部署前使用 `verify-no-secrets.sh` 扫描 Git 跟踪文件中的敏感信息：
+
+```bash
+bash scripts/verify-no-secrets.sh          # 扫描全部
+bash scripts/verify-no-secrets.sh --fail-fast  # 发现即停止
+```
+
+**检测模式：**
+- OpenAI/API 密钥（`sk-*`）
+- 密码赋值（`password=`、`PASSWORD=`）
+- 密钥赋值（`secret=`、`token=`、`api_key=`）
+- AWS 凭证（`AKIA*`）
+- 私钥标记（`BEGIN RSA PRIVATE KEY`）
+
+**排除规则：**
+- `.env.example`、`deploy-config.bat.example` 等模板文件
+- 注释行（`#` 或 `//` 开头）
+- 占位符值（`changeme`、`xxx`、`your-`、`example` 等）
+- `.gsd.migrating/` 目录（迁移中的文件）
+- 二进制文件（图片、字体、压缩包、数据库）
+
+> `/release` 技能的 Phase 2 会自动运行此扫描。扫描发现敏感信息将阻止部署。
 
 ## 故障排除
 

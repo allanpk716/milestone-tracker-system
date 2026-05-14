@@ -77,11 +77,11 @@ return timingSafeEqual(bufA, bufB);
 
 ## SvelteKit 相关
 
-### 使用 adapter-node 而非 adapter-static
+## 使用 adapter-node 而非 adapter-static
 
 项目必须使用 `@sveltejs/adapter-node`，因为系统需要服务端 API 路由（Agent 通过 REST API 上报进度）。`adapter-static` 不支持服务端路由。
 
-### 路由分组布局
+## 路由分组布局
 
 `(app)` 是 SvelteKit 的路由分组（group），不影响 URL 路径但共享布局：
 - 根 `+layout.svelte` — 全局 HTML 骨架
@@ -259,6 +259,97 @@ E2E 测试使用独立的 Vitest 配置文件 `tests/e2e/e2e.config.ts`，与单
 ### 使用原生 fetch
 
 E2E 测试使用 Node 22 内置的 `fetch` API（`tests/e2e/helpers.ts`），无需额外 HTTP 库。提供 `api()` 函数封装认证请求和 JSON 解析，`login()` 函数处理登录流程。
+
+## M004 交付运维闭环
+
+### deploy.bat Git Bash 非 TTY 限制
+
+`deploy.bat` 使用 `@echo off` + `chcp 65001 > nul 2>&1`。在 Git Bash 的非 TTY 环境下（如 GSD agent 通过 bash 调用），这些命令会吞掉所有 stdout 输出，导致看不到任何部署进度。
+
+**解决方案：**
+1. 通过 `cmd.exe /c scripts\\deploy.bat` 调用（`/release` 技能采用此方式）
+2. 或将 deploy.bat 的 6 个阶段拆分为独立 bash 命令逐个执行
+
+### deploy.bat NSSM_PATH 修复
+
+远程服务器上 `nssm` 不在系统 PATH 中。原始 deploy.bat 直接调用 `nssm restart`，导致 "command not found" 错误。
+
+**修复：** 引入 `NSSM_PATH` 可配置变量，默认值 `C:\WorkSpace\milestone-tracker\nssm.exe`，在 `deploy-config.bat` 中可覆盖。所有 NSSM 命令（restart、status、stop）均使用 `%NSSM_PATH%`。
+
+### deploy.bat SCP 端口冲突
+
+当配置了 `SSH_ALIAS` 时，SSH config 已经定义了连接端口。如果此时 SCP 还传递 `-P` 标志，会导致端口冲突。
+
+**修复：** deploy.bat 在 `SSH_ALIAS` 模式下不传递 `-P` 标志给 SCP，让 SSH config 控制端口。仅在 `REMOTE_HOST` 模式（无 alias）下才传递 `-P %SSH_PORT%`。
+
+### Agent E2E spawn-based CLI 测试模式
+
+Agent E2E 测试通过 `child_process.spawn` 调用编译后的 `mt-cli` 二进制文件，而非 HTTP API：
+
+**架构：**
+- `global-setup.ts` — 创建临时 SQLite 数据库、种子数据、启动测试服务器
+- 测试文件通过 `spawn('mt-cli', [...args, '--json'])` 调用 CLI
+- 所有输出以 JSON 格式解析，验证 `{error, code}` 错误结构
+- `global-teardown.ts` — 停止测试服务器、清理临时文件
+
+**关键注意：** spawn 的 stdin 必须通过 `child.stdin.end()` 关闭，否则 CLI 会等待输入而挂起。
+
+### Dual Auth Pattern (双认证)
+
+系统使用两套独立的认证机制，各有适用场景：
+
+| 机制 | 传输方式 | 适用场景 | 验证方式 |
+|------|----------|----------|----------|
+| Bearer API Key | `Authorization: Bearer <key>` header | CLI、Agent API 调用 | 直接匹配 `API_KEYS` 列表 |
+| Cookie Session | `Cookie: session=<token>` | Web UI | HMAC-SHA256 签名验证 |
+
+**关键规则：** 永远不要将 session token 作为 Bearer header 使用，也不要将 API key 放在 Cookie 中。两套认证的验证逻辑完全独立。
+
+### CLI --json 错误格式一致性
+
+所有 CLI 命令在 `--json` 模式下的错误输出必须遵循统一结构：
+
+```json
+{
+  "error": "Error description",
+  "code": "HTTP_401"
+}
+```
+
+HTTP 状态码映射：`HTTP_401`（未认证）、`HTTP_403`（无权限）、`HTTP_404`（未找到）、`HTTP_409`（冲突）、`HTTP_500`（服务器错误）。测试验证时需同时检查 `error` 字段存在性和 `code` 格式。
+
+### Empty MT_API_KEY is Falsy
+
+空字符串 `""` 在 JavaScript 中是 falsy 值。当测试 401 认证失败时，如果使用空字符串作为 API key，某些代码路径可能不会触发认证检查（因为 `if (!key)` 跳过了验证）。
+
+**测试注意：** 401 测试必须使用非空的无效 key（如 `"invalid-key"`），并确保使用隔离的临时配置（避免污染全局 `.mt-cli.json`）。通过 `MT_API_KEY` 环境变量或独立的 `.mt-env` 文件传递测试用 key。
+
+## Agent E2E 测试架构
+
+### spawn-based 测试模式
+
+Agent E2E 测试通过 `child_process.spawn` 调用编译后的 `mt-cli` 二进制文件，而非 HTTP API：
+
+- `global-setup.ts` — 创建临时 SQLite 数据库、种子数据、启动测试服务器
+- 测试文件通过 `spawn('mt-cli', [...args, '--json'])` 调用 CLI
+- `global-teardown.ts` — 停止测试服务器、清理临时文件
+
+**spawn 注意事项：** stdin 必须通过 `child.stdin.end()` 关闭，否则 CLI 会等待输入而挂起。
+
+### 测试覆盖范围
+
+38 个测试用例覆盖全部 11 个 CLI 命令：
+- 全局命令：`health`, `login`, `status`
+- 里程碑命令：`create-milestone`, `list-milestones`, `show-milestone`
+- 任务命令：`create-task`, `list-tasks`, `update-task`, `show-task`
+- 模块命令：`list-modules`
+
+### JSON 输出验证
+
+所有 CLI `--json` 输出测试需验证：
+- 成功响应包含预期的数据字段
+- 错误响应包含 `{error, code}` 结构
+- `code` 遵循 `HTTP_{status}` 格式
 
 ## 常见问题
 

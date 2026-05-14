@@ -2,22 +2,17 @@
  * E2E tests — Core business flow.
  *
  * Full lifecycle: Create milestone → GET by ID → PATCH status → verify updated status.
+ * Uses Bearer API key auth (E2E_API_KEY) for all requests.
  */
-import { describe, it, expect, beforeAll } from 'vitest';
-import { api, login, type MilestoneResponse } from './helpers.js';
+import { describe, it, expect } from 'vitest';
+import { authenticatedApi, type MilestoneResponse } from './helpers.js';
 
 describe('Core business flow', () => {
-	let token: string;
 	let createdId: string;
 
-	beforeAll(async () => {
-		token = await login();
-	});
-
 	it('creates a milestone (POST /api/milestones)', async () => {
-		const { status, body } = await api('/api/milestones', {
+		const { status, body } = await authenticatedApi('/api/milestones', {
 			method: 'POST',
-			token,
 			body: JSON.stringify({
 				title: `E2E Test Milestone ${Date.now()}`
 			})
@@ -35,7 +30,7 @@ describe('Core business flow', () => {
 	it('gets the milestone by ID (GET /api/milestones/:id)', async () => {
 		expect(createdId).toBeDefined();
 
-		const { status, body } = await api(`/api/milestones/${createdId}`, { token });
+		const { status, body } = await authenticatedApi(`/api/milestones/${createdId}`);
 
 		expect(status).toBe(200);
 		const milestone = body as MilestoneResponse;
@@ -44,9 +39,8 @@ describe('Core business flow', () => {
 	});
 
 	it('updates milestone status to in-progress (PATCH /api/milestones/:id)', async () => {
-		const { status, body } = await api(`/api/milestones/${createdId}`, {
+		const { status, body } = await authenticatedApi(`/api/milestones/${createdId}`, {
 			method: 'PATCH',
-			token,
 			body: JSON.stringify({ status: 'in-progress' })
 		});
 
@@ -57,7 +51,7 @@ describe('Core business flow', () => {
 	});
 
 	it('reflects the updated status on re-fetch', async () => {
-		const { status, body } = await api(`/api/milestones/${createdId}`, { token });
+		const { status, body } = await authenticatedApi(`/api/milestones/${createdId}`);
 
 		expect(status).toBe(200);
 		const milestone = body as MilestoneResponse;
@@ -65,7 +59,7 @@ describe('Core business flow', () => {
 	});
 
 	it('returns 404 for non-existent milestone', async () => {
-		const { status, body } = await api('/api/milestones/NON-EXISTENT-999', { token });
+		const { status, body } = await authenticatedApi('/api/milestones/NON-EXISTENT-999');
 
 		expect(status).toBe(404);
 		expect(body).toMatchObject({
@@ -74,9 +68,8 @@ describe('Core business flow', () => {
 	});
 
 	it('returns 400 for invalid status in PATCH', async () => {
-		const { status, body } = await api(`/api/milestones/${createdId}`, {
+		const { status, body } = await authenticatedApi(`/api/milestones/${createdId}`, {
 			method: 'PATCH',
-			token,
 			body: JSON.stringify({ status: 'invalid-status' })
 		});
 

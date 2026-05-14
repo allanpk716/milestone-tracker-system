@@ -96,6 +96,7 @@ SKIP_FILES=(
   ".env.example"
   "deploy-config.bat.example"
   "verify-no-secrets.sh"
+  "logger.test.ts"
 )
 
 should_skip_file() {

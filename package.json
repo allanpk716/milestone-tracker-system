@@ -8,6 +8,7 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:e2e": "vitest run tests/e2e/ --config tests/e2e/e2e.config.ts",
+    "test:agent-e2e": "vitest run tests/agent-e2e/ --config tests/agent-e2e/agent-e2e.config.ts",
     "test:watch": "vitest",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",

@@ -40,6 +40,7 @@ set HEALTH_CHECK_INTERVAL=2
 set AUTO_RESTART=yes
 set BACKUP_BEFORE_DEPLOY=yes
 set BACKUP_KEEP_COUNT=3
+set NSSM_PATH=C:\WorkSpace\milestone-tracker\nssm.exe
 
 :: ── 辅助函数：输出带时间戳的状态 ─────────────────────────────
 :timestamp
@@ -106,10 +107,15 @@ if not "%SSH_ALIAS%"=="" (
 )
 
 :: 确定 SCP 源参数
-if not "%SSH_KEY_PATH%"=="" (
-    set SCP_OPTS=-i "%SSH_KEY_PATH%" -P %SSH_PORT% -r
+if not "%SSH_ALIAS%"=="" (
+    :: SSH alias mode — let SSH config handle the port
+    set SCP_OPTS=-r
 ) else (
-    set SCP_OPTS=-P %SSH_PORT% -r
+    if not "%SSH_KEY_PATH%"=="" (
+        set SCP_OPTS=-i "%SSH_KEY_PATH%" -P %SSH_PORT% -r
+    ) else (
+        set SCP_OPTS=-P %SSH_PORT% -r
+    )
 )
 
 if not "%SSH_ALIAS%"=="" (
@@ -187,7 +193,7 @@ echo.
 
 :: 4a. 创建远程目录结构
 echo      创建远程目录 ...
-ssh %SSH_TARGET% "mkdir -p %REMOTE_PATH%\build %REMOTE_PATH%\logs %REMOTE_PATH%\data"
+ssh %SSH_TARGET% "if not exist %REMOTE_PATH%\build mkdir %REMOTE_PATH%\build & if not exist %REMOTE_PATH%\logs mkdir %REMOTE_PATH%\logs & if not exist %REMOTE_PATH%\data mkdir %REMOTE_PATH%\data"
 if %errorlevel% neq 0 (
     echo [错误] 创建远程目录失败。
     exit /b 1
@@ -241,12 +247,12 @@ echo.
 
 if /i "%AUTO_RESTART%"=="yes" (
     echo      通过 NSSM 重启服务 '%SERVICE_NAME%' ...
-    ssh %SSH_TARGET% "nssm restart %SERVICE_NAME%"
+    ssh %SSH_TARGET% "%NSSM_PATH% restart %SERVICE_NAME%"
     if %errorlevel% neq 0 (
         echo [错误] 服务重启失败。
         echo.
         echo      诊断信息：
-        ssh %SSH_TARGET% "nssm status %SERVICE_NAME%" 2>&1
+        ssh %SSH_TARGET% "%NSSM_PATH% status %SERVICE_NAME%" 2>&1
         echo.
         echo      最近日志：
         ssh %SSH_TARGET% "if exist %REMOTE_PATH%\logs\milestone-tracker.err.log (type %REMOTE_PATH%\logs\milestone-tracker.err.log | more +0) else (echo 无错误日志)" 2>&1
@@ -258,7 +264,7 @@ if /i "%AUTO_RESTART%"=="yes" (
     echo      服务重启完成。
 ) else (
     echo      AUTO_RESTART=no，跳过自动重启。
-    echo      请手动重启服务：ssh %SSH_TARGET% "nssm restart %SERVICE_NAME%"
+    echo      请手动重启服务：ssh %SSH_TARGET% "%NSSM_PATH% restart %SERVICE_NAME%"
 )
 echo.
 
@@ -302,7 +308,7 @@ if %HEALTH_PASSED% equ 0 (
     echo      诊断信息：
     echo.
     echo      服务状态：
-    ssh %SSH_TARGET% "nssm status %SERVICE_NAME%" 2>&1
+    ssh %SSH_TARGET% "%NSSM_PATH% status %SERVICE_NAME%" 2>&1
     echo.
     echo      错误日志（最后 20 行）：
     ssh %SSH_TARGET% "if exist %REMOTE_PATH%\logs\milestone-tracker.err.log (powershell -Command \"Get-Content %REMOTE_PATH%\logs\milestone-tracker.err.log -Tail 20\") else (echo 无错误日志)" 2>&1
@@ -326,10 +332,10 @@ echo   健康状态  : OK
 echo   构建时间  : %date% %time%
 echo.
 echo   管理命令：
-echo     查看状态: ssh %SSH_TARGET% "nssm status %SERVICE_NAME%"
+echo     查看状态: ssh %SSH_TARGET% "%NSSM_PATH% status %SERVICE_NAME%"
 echo     查看日志: ssh %SSH_TARGET% "dir %REMOTE_PATH%\logs"
-echo     重启服务: ssh %SSH_TARGET% "nssm restart %SERVICE_NAME%"
-echo     停止服务: ssh %SSH_TARGET% "nssm stop %SERVICE_NAME%"
+echo     重启服务: ssh %SSH_TARGET% "%NSSM_PATH% restart %SERVICE_NAME%"
+echo     停止服务: ssh %SSH_TARGET% "%NSSM_PATH% stop %SERVICE_NAME%"
 echo ============================================================
 echo.
 endlocal

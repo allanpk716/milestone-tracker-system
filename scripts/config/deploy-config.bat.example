@@ -35,6 +35,9 @@ set SERVICE_PORT=30002
 :: Node.js 可执行文件路径（远程服务器上的 node.exe 路径）
 set NODE_PATH=C:\Program Files\nodejs\node.exe
 
+:: NSSM 可执行文件路径（远程服务器上的 nssm.exe 路径）
+set NSSM_PATH=C:\WorkSpace\milestone-tracker\nssm.exe
+
 :: ── 健康检查配置 ────────────────────────────────────────────
 :: 健康检查 URL
 set HEALTH_CHECK_URL=http://172.18.200.47:30002/api/health
