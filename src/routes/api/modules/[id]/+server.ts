@@ -1,8 +1,16 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types.js';
 import { db } from '$lib/db/index.js';
-import { updateModule } from '$lib/server/module-service.js';
+import { getModule, updateModule } from '$lib/server/module-service.js';
 import { updateModuleSchema } from '$lib/schemas/index.js';
+
+export const GET: RequestHandler = async ({ params }) => {
+	const mod = await getModule(db, params.id);
+	if (!mod) {
+		return json({ error: 'not_found', message: `Module ${params.id} not found` }, { status: 404 });
+	}
+	return json(mod);
+};
 
 export const PATCH: RequestHandler = async ({ params, request }) => {
 	let body: unknown;

@@ -4,6 +4,7 @@ import { MtClient } from '../client.js';
 import type { TaskResponse } from '../types.js';
 import { parseTaskId, resolveTaskId } from '../utils/id.js';
 import { statusLabel, progressBar, formatDate, divider } from '../utils/format.js';
+import { outputJson, outputJsonError } from '../utils/json-output.js';
 
 /**
  * Resolve #N references in a description string.
@@ -30,7 +31,8 @@ export function registerShowCommand(
   tasksGroup
     .command('show <taskId>')
     .description('查看任务详情')
-    .action(async (taskId: string) => {
+    .option('--json', '以 JSON 格式输出')
+    .action(async (taskId: string, opts: { json?: boolean }) => {
       const config = getConfig();
       const client = new MtClient({ baseUrl: config.serverUrl, apiKey: config.apiKey });
 
@@ -42,6 +44,11 @@ export function registerShowCommand(
 
         // Fetch task detail
         const task = await client.get<TaskResponse>(`/api/tasks/${encodeURIComponent(fullId)}`);
+
+        if (opts.json) {
+          outputJson(task);
+          return;
+        }
 
         // Fetch all tasks for inline reference resolution
         const allTasks = await client.get<TaskResponse[]>(
@@ -103,6 +110,9 @@ export function registerShowCommand(
         console.log(divider('═', 40));
         console.log('');
       } catch (err) {
+        if (opts.json) {
+          outputJsonError(err);
+        }
         if (err instanceof Error) {
           console.error(err.message);
         }

@@ -11,6 +11,8 @@ import {
 	adminTaskAction,
 	nextTaskId,
 	updateTask,
+	blockTask,
+	unblockTask,
 	listKanbanData
 } from './task-service.js';
 import { createMilestone } from './milestone-service.js';
@@ -55,7 +57,10 @@ CREATE TABLE tasks (
   sub_total INTEGER NOT NULL DEFAULT 0,
   sub_done INTEGER NOT NULL DEFAULT 0,
   progress_message TEXT,
+  blocked_reason TEXT,
   commit_hash TEXT,
+  evidence_json TEXT,
+  files_touched TEXT,
   created_at INTEGER NOT NULL DEFAULT (unixepoch()),
   updated_at INTEGER NOT NULL DEFAULT (unixepoch()),
   reported_at INTEGER
@@ -315,6 +320,65 @@ describe('task API — complete', () => {
 		const { task } = await seedTaskDirect('Todo', { status: 'todo' });
 		const result = await completeTask(db, task.id, {});
 		expect(result.error).toBe('invalid_status');
+	});
+
+	it('completes with evidence and persists it', async () => {
+		const { task } = await seedTaskDirect('Evidence', { status: 'review' });
+		const evidence = [
+			{ command: 'npm test', exitCode: 0, verdict: 'pass' },
+			{ command: 'npm run lint', exitCode: 0, verdict: 'pass' }
+		];
+		const result = await completeTask(db, task.id, {
+			commitHash: 'abc123',
+			evidence
+		});
+		expect(result.task).toBeDefined();
+		expect(result.task!.status).toBe('done');
+		expect(result.task!.evidence).toEqual(evidence);
+	});
+
+	it('completes with filesTouched and persists it', async () => {
+		const { task } = await seedTaskDirect('Files', { status: 'in-progress' });
+		const files = ['src/lib/db/schema.ts', 'src/lib/schemas/task.ts'];
+		const result = await completeTask(db, task.id, { filesTouched: files });
+		expect(result.task!.status).toBe('done');
+		expect(result.task!.filesTouched).toEqual(files);
+	});
+
+	it('completes with both evidence and filesTouched', async () => {
+		const { task } = await seedTaskDirect('Both', { status: 'review' });
+		const evidence = [{ command: 'vitest run', exitCode: 0, verdict: 'pass' }];
+		const files = ['src/a.ts'];
+		const result = await completeTask(db, task.id, { evidence, filesTouched: files });
+		expect(result.task!.evidence).toEqual(evidence);
+		expect(result.task!.filesTouched).toEqual(files);
+	});
+
+	it('stores null when evidence is empty array', async () => {
+		const { task } = await seedTaskDirect('Empty', { status: 'review' });
+		const result = await completeTask(db, task.id, { evidence: [] });
+		expect(result.task!.evidence).toBeNull();
+	});
+
+	it('stores null when filesTouched is empty array', async () => {
+		const { task } = await seedTaskDirect('EmptyFiles', { status: 'review' });
+		const result = await completeTask(db, task.id, { filesTouched: [] });
+		expect(result.task!.filesTouched).toBeNull();
+	});
+
+	it('omits evidence/filesTouched when not provided (backward compat)', async () => {
+		const { task } = await seedTaskDirect('Compat', { status: 'review' });
+		const result = await completeTask(db, task.id, { commitHash: 'def456' });
+		expect(result.task!.evidence).toBeNull();
+		expect(result.task!.filesTouched).toBeNull();
+	});
+
+	it('returns evidence in getTask detail', async () => {
+		const { task } = await seedTaskDirect('DetailEvidence', { status: 'review' });
+		const evidence = [{ command: 'npm test', exitCode: 0, verdict: 'pass' }];
+		await completeTask(db, task.id, { evidence });
+		const detail = await getTask(db, task.id);
+		expect(detail!.evidence).toEqual(evidence);
 	});
 });
 
@@ -639,5 +703,131 @@ describe('zombie detection', () => {
 		expect(assignees).toHaveLength(2);
 		expect(assignees).toContain('alice');
 		expect(assignees).toContain('bob');
+	});
+});
+
+// ── Block Task ───────────────────────────────────────────────────────────────
+
+describe('task API — block', () => {
+	it('blocks an in-progress task and sets blockedReason', async () => {
+		const { task } = await seedTaskDirect('Block Me', { status: 'in-progress' });
+		const result = await blockTask(db, task.id, { reason: 'Missing OAuth config' });
+		expect(result.task).toBeDefined();
+		expect(result.task!.status).toBe('blocked');
+		expect(result.task!.blockedReason).toBe('Missing OAuth config');
+	});
+
+	it('returns not_found for non-existent task', async () => {
+		const result = await blockTask(db, 'TASK-999', { reason: 'Nope' });
+		expect(result.error).toBe('not_found');
+	});
+
+	it('rejects blocking a todo task', async () => {
+		const { task } = await seedTaskDirect('Todo Block', { status: 'todo' });
+		const result = await blockTask(db, task.id, { reason: 'Cannot block' });
+		expect(result.error).toBe('invalid_status');
+		if (result.error === 'invalid_status') {
+			expect(result.currentStatus).toBe('todo');
+		}
+	});
+
+	it('rejects blocking an already-blocked task', async () => {
+		const { task } = await seedTaskDirect('Already Blocked', { status: 'blocked' });
+		const result = await blockTask(db, task.id, { reason: 'Double block' });
+		expect(result.error).toBe('invalid_status');
+		if (result.error === 'invalid_status') {
+			expect(result.currentStatus).toBe('blocked');
+		}
+	});
+
+	it('rejects blocking a done task', async () => {
+		const { task } = await seedTaskDirect('Done Block', { status: 'done' });
+		const result = await blockTask(db, task.id, { reason: 'Cannot block done' });
+		expect(result.error).toBe('invalid_status');
+	});
+
+	it('rejects blocking a review task', async () => {
+		const { task } = await seedTaskDirect('Review Block', { status: 'review' });
+		const result = await blockTask(db, task.id, { reason: 'Cannot block review' });
+		expect(result.error).toBe('invalid_status');
+	});
+
+	it('rejects blocking a skipped task', async () => {
+		const { task } = await seedTaskDirect('Skipped Block', { status: 'skipped' });
+		const result = await blockTask(db, task.id, { reason: 'Cannot block skipped' });
+		expect(result.error).toBe('invalid_status');
+	});
+
+	it('accepts reason at max length (2000 chars)', async () => {
+		const { task } = await seedTaskDirect('Long Reason', { status: 'in-progress' });
+		const longReason = 'X'.repeat(2000);
+		const result = await blockTask(db, task.id, { reason: longReason });
+		expect(result.task!.blockedReason).toBe(longReason);
+	});
+
+	it('accepts reason with special characters', async () => {
+		const { task } = await seedTaskDirect('Special', { status: 'in-progress' });
+		const specialReason = '需要配置 🔒 JSON {"key": "value"} <script>alert(1)</script>';
+		const result = await blockTask(db, task.id, { reason: specialReason });
+		expect(result.task!.blockedReason).toBe(specialReason);
+	});
+
+	it('includes blockedReason in task response', async () => {
+		const { task } = await seedTaskDirect('Response Check', { status: 'in-progress' });
+		await blockTask(db, task.id, { reason: 'API key missing' });
+		const detail = await getTask(db, task.id);
+		expect(detail!.blockedReason).toBe('API key missing');
+	});
+});
+
+// ── Unblock Task ─────────────────────────────────────────────────────────────
+
+describe('task API — unblock', () => {
+	it('unblocks a blocked task and clears blockedReason', async () => {
+		const { task } = await seedTaskDirect('Unblock Me', {
+			status: 'blocked',
+			blockedReason: 'Old reason'
+		});
+		const result = await unblockTask(db, task.id, {});
+		expect(result.task).toBeDefined();
+		expect(result.task!.status).toBe('in-progress');
+		expect(result.task!.blockedReason).toBeNull();
+	});
+
+	it('unblocks with optional message as progressMessage', async () => {
+		const { task } = await seedTaskDirect('Unblock Msg', {
+			status: 'blocked',
+			blockedReason: 'Fixed'
+		});
+		const result = await unblockTask(db, task.id, { message: 'OAuth config has been added' });
+		expect(result.task!.status).toBe('in-progress');
+		expect(result.task!.blockedReason).toBeNull();
+		expect(result.task!.progressMessage).toBe('OAuth config has been added');
+	});
+
+	it('returns not_found for non-existent task', async () => {
+		const result = await unblockTask(db, 'TASK-999', {});
+		expect(result.error).toBe('not_found');
+	});
+
+	it('rejects unblocking an in-progress task', async () => {
+		const { task } = await seedTaskDirect('In Progress', { status: 'in-progress' });
+		const result = await unblockTask(db, task.id, {});
+		expect(result.error).toBe('invalid_status');
+		if (result.error === 'invalid_status') {
+			expect(result.currentStatus).toBe('in-progress');
+		}
+	});
+
+	it('rejects unblocking a todo task', async () => {
+		const { task } = await seedTaskDirect('Todo Unblock', { status: 'todo' });
+		const result = await unblockTask(db, task.id, {});
+		expect(result.error).toBe('invalid_status');
+	});
+
+	it('rejects unblocking a done task', async () => {
+		const { task } = await seedTaskDirect('Done Unblock', { status: 'done' });
+		const result = await unblockTask(db, task.id, {});
+		expect(result.error).toBe('invalid_status');
 	});
 });

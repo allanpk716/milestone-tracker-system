@@ -10,6 +10,8 @@ export {
 	completeTaskSchema,
 	adminTaskActionSchema,
 	updateTaskSchema,
+	blockTaskSchema,
+	unblockTaskSchema,
 	taskResponseSchema,
 	isValidTransition
 } from './task.js';
@@ -19,6 +21,8 @@ export type {
 	CompleteTaskInput,
 	AdminTaskActionInput,
 	UpdateTaskInput,
+	BlockTaskInput,
+	UnblockTaskInput,
 	TaskResponse
 } from './task.js';
 

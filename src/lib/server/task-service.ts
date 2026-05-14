@@ -7,7 +7,9 @@ import type {
 	ProgressTaskInput,
 	CompleteTaskInput,
 	AdminTaskActionInput,
-	UpdateTaskInput
+	UpdateTaskInput,
+	BlockTaskInput,
+	UnblockTaskInput
 } from '$lib/schemas/index.js';
 import { isValidTransition } from '$lib/schemas/index.js';
 
@@ -192,6 +194,8 @@ export async function completeTask(
 	};
 	if (data.commitHash !== undefined) updates.commitHash = data.commitHash ?? null;
 	if (data.progressMessage !== undefined) updates.progressMessage = data.progressMessage ?? null;
+	if (data.evidence !== undefined) updates.evidenceJson = data.evidence.length > 0 ? JSON.stringify(data.evidence) : null;
+	if (data.filesTouched !== undefined) updates.filesTouched = data.filesTouched.length > 0 ? JSON.stringify(data.filesTouched) : null;
 
 	const result = await db
 		.update(tasks)
@@ -267,6 +271,70 @@ export async function updateTask(
 	if (data.title !== undefined) updates.title = data.title;
 	if (data.description !== undefined) updates.description = data.description ?? null;
 	if (data.assignee !== undefined) updates.assignee = data.assignee ?? null;
+
+	const result = await db
+		.update(tasks)
+		.set(updates)
+		.where(eq(tasks.id, id))
+		.returning()
+		.get();
+
+	return { task: formatTaskResponse(result) };
+}
+
+// ── Block ────────────────────────────────────────────────────────────────────
+
+export async function blockTask(
+	db: BetterSQLite3Database<any>,
+	id: string,
+	data: BlockTaskInput
+) {
+	const existing = await db.select().from(tasks).where(eq(tasks.id, id)).get();
+	if (!existing) return { error: 'not_found' as const };
+
+	if (existing.status !== 'in-progress') {
+		return { error: 'invalid_status' as const, currentStatus: existing.status };
+	}
+
+	const updates: Record<string, any> = {
+		status: 'blocked',
+		blockedReason: data.reason,
+		updatedAt: sql`(unixepoch())`
+	};
+
+	const result = await db
+		.update(tasks)
+		.set(updates)
+		.where(eq(tasks.id, id))
+		.returning()
+		.get();
+
+	return { task: formatTaskResponse(result) };
+}
+
+// ── Unblock ──────────────────────────────────────────────────────────────────
+
+export async function unblockTask(
+	db: BetterSQLite3Database<any>,
+	id: string,
+	data: UnblockTaskInput
+) {
+	const existing = await db.select().from(tasks).where(eq(tasks.id, id)).get();
+	if (!existing) return { error: 'not_found' as const };
+
+	if (existing.status !== 'blocked') {
+		return { error: 'invalid_status' as const, currentStatus: existing.status };
+	}
+
+	const updates: Record<string, any> = {
+		status: 'in-progress',
+		blockedReason: null,
+		updatedAt: sql`(unixepoch())`
+	};
+
+	if (data.message !== undefined) {
+		updates.progressMessage = data.message;
+	}
 
 	const result = await db
 		.update(tasks)
@@ -365,6 +433,14 @@ function formatModuleResponse(row: any) {
 // ── Formatter ────────────────────────────────────────────────────────────────
 
 function formatTaskResponse(row: any) {
+	let evidence: Array<{ command: string; exitCode: number; verdict: string }> | null = null;
+	if (row.evidenceJson) {
+		try { evidence = JSON.parse(row.evidenceJson); } catch { evidence = null; }
+	}
+	let filesTouched: string[] | null = null;
+	if (row.filesTouched) {
+		try { filesTouched = JSON.parse(row.filesTouched); } catch { filesTouched = null; }
+	}
 	return {
 		id: row.id,
 		shortId: row.shortId,
@@ -377,7 +453,10 @@ function formatTaskResponse(row: any) {
 		subTotal: row.subTotal,
 		subDone: row.subDone,
 		progressMessage: row.progressMessage,
+		blockedReason: row.blockedReason ?? null,
 		commitHash: row.commitHash,
+		evidence,
+		filesTouched,
 		createdAt: new Date(row.createdAt).toISOString(),
 		updatedAt: new Date(row.updatedAt).toISOString(),
 		reportedAt: row.reportedAt ? new Date(row.reportedAt).toISOString() : null

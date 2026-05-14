@@ -55,6 +55,17 @@ export async function createModule(
 	return formatModuleResponse(result);
 }
 
+// ── Get by ID ─────────────────────────────────────────────────────────────────
+
+export async function getModule(
+	db: BetterSQLite3Database<any>,
+	id: string
+) {
+	const row = await db.select().from(modules).where(eq(modules.id, id)).get();
+	if (!row) return null;
+	return formatModuleResponse(row);
+}
+
 // ── List by Milestone ────────────────────────────────────────────────────────
 
 export async function listModulesByMilestone(

@@ -43,9 +43,17 @@ export type ProgressTaskInput = z.infer<typeof progressTaskSchema>;
 
 // ── Complete ────────────────────────────────────────────────────────────────
 
+const evidenceItemSchema = z.object({
+	command: z.string().max(500),
+	exitCode: z.number().int(),
+	verdict: z.enum(['pass', 'fail', 'skip', 'error'])
+});
+
 export const completeTaskSchema = z.object({
 	commitHash: z.string().max(40).optional(),
-	progressMessage: z.string().max(5000).optional()
+	progressMessage: z.string().max(5000).optional(),
+	evidence: z.array(evidenceItemSchema).max(50).optional(),
+	filesTouched: z.array(z.string().max(500)).max(200).optional()
 });
 export type CompleteTaskInput = z.infer<typeof completeTaskSchema>;
 
@@ -67,6 +75,20 @@ export const updateTaskSchema = z.object({
 });
 export type UpdateTaskInput = z.infer<typeof updateTaskSchema>;
 
+// ── Block ────────────────────────────────────────────────────────────────────
+
+export const blockTaskSchema = z.object({
+	reason: z.string().min(1, 'Block reason is required').max(2000)
+});
+export type BlockTaskInput = z.infer<typeof blockTaskSchema>;
+
+// ── Unblock ──────────────────────────────────────────────────────────────────
+
+export const unblockTaskSchema = z.object({
+	message: z.string().max(5000).optional()
+});
+export type UnblockTaskInput = z.infer<typeof unblockTaskSchema>;
+
 // ── Response (with resolved references) ─────────────────────────────────────
 
 export const taskResponseSchema = z.object({
@@ -81,7 +103,14 @@ export const taskResponseSchema = z.object({
 	subTotal: z.number().int().nonnegative(),
 	subDone: z.number().int().nonnegative(),
 	progressMessage: z.string().nullable(),
+	blockedReason: z.string().nullable(),
 	commitHash: z.string().nullable(),
+	evidence: z.array(z.object({
+		command: z.string(),
+		exitCode: z.number().int(),
+		verdict: z.string()
+	})).nullable(),
+	filesTouched: z.array(z.string()).nullable(),
 	createdAt: z.string().datetime(),
 	updatedAt: z.string().datetime(),
 	reportedAt: z.string().datetime().nullable()

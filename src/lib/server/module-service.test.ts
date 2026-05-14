@@ -5,7 +5,8 @@ import * as schema from '$lib/db/schema.js';
 import {
 	createModule,
 	listModulesByMilestone,
-	updateModule
+	updateModule,
+	getModule
 } from './module-service.js';
 import { createMilestone } from './milestone-service.js';
 
@@ -48,7 +49,10 @@ CREATE TABLE tasks (
   sub_total INTEGER NOT NULL DEFAULT 0,
   sub_done INTEGER NOT NULL DEFAULT 0,
   progress_message TEXT,
+  blocked_reason TEXT,
   commit_hash TEXT,
+  evidence_json TEXT,
+  files_touched TEXT,
   created_at INTEGER NOT NULL DEFAULT (unixepoch()),
   updated_at INTEGER NOT NULL DEFAULT (unixepoch()),
   reported_at INTEGER
@@ -156,5 +160,33 @@ describe('module API — full CRUD cycle', () => {
 	it('returns null when updating non-existent module', async () => {
 		const updated = await updateModule(db, 'MOD-999-1', { name: 'Nope' });
 		expect(updated).toBeNull();
+	});
+
+	it('gets module by ID', async () => {
+		const ms = await seedMilestone(1);
+		const mod = await createModule(db, ms.id, { name: 'Fetch Me' });
+		const fetched = await getModule(db, mod!.id);
+		expect(fetched).not.toBeNull();
+		expect(fetched!.id).toBe(mod!.id);
+		expect(fetched!.name).toBe('Fetch Me');
+		expect(fetched!.milestoneId).toBe(ms.id);
+	});
+
+	it('returns null for non-existent module ID', async () => {
+		const fetched = await getModule(db, 'MOD-999-1');
+		expect(fetched).toBeNull();
+	});
+
+	it('gets module with all fields populated', async () => {
+		const ms = await seedMilestone(5);
+		const mod = await createModule(db, ms.id, {
+			name: 'Full Module',
+			description: 'Has all fields',
+			sortOrder: 42
+		});
+		const fetched = await getModule(db, mod!.id);
+		expect(fetched!.description).toBe('Has all fields');
+		expect(fetched!.sortOrder).toBe(42);
+		expect(fetched!.status).toBe('draft');
 	});
 });

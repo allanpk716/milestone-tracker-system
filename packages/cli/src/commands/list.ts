@@ -3,6 +3,7 @@ import type { ResolvedConfig } from '../config.js';
 import { MtClient } from '../client.js';
 import type { TaskResponse } from '../types.js';
 import { statusLabel, taskRow } from '../utils/format.js';
+import { outputJson, outputJsonError } from '../utils/json-output.js';
 
 export function registerListCommand(
   tasksGroup: Command,
@@ -12,7 +13,8 @@ export function registerListCommand(
     .command('list')
     .description('列出所有任务（默认排除已完成和已跳过）')
     .option('--status <status>', '按状态筛选 (todo|in-progress|blocked|review|done|skipped)')
-    .action(async (opts: { status?: string }) => {
+    .option('--json', '以 JSON 格式输出')
+    .action(async (opts: { status?: string; json?: boolean }) => {
       const config = getConfig();
       const client = new MtClient({ baseUrl: config.serverUrl, apiKey: config.apiKey });
 
@@ -25,6 +27,11 @@ export function registerListCommand(
         }
 
         const tasks = await client.get<TaskResponse[]>(`/api/tasks?${params}`);
+
+        if (opts.json) {
+          outputJson(tasks);
+          return;
+        }
 
         if (tasks.length === 0) {
           console.log(`\n  暂无${status ? `状态为「${statusLabel(status)}」的` : ''}任务。\n`);
@@ -47,6 +54,9 @@ export function registerListCommand(
           console.log('');
         }
       } catch (err) {
+        if (opts.json) {
+          outputJsonError(err);
+        }
         if (err instanceof Error) {
           console.error(err.message);
         }

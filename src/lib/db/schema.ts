@@ -78,7 +78,10 @@ export const tasks = sqliteTable(
 		subTotal: integer('sub_total').notNull().default(0),
 		subDone: integer('sub_done').notNull().default(0),
 		progressMessage: text('progress_message'),
+		blockedReason: text('blocked_reason'),
 		commitHash: text('commit_hash'),
+		evidenceJson: text('evidence_json'),
+		filesTouched: text('files_touched'),
 		createdAt: integer('created_at', { mode: 'timestamp' })
 			.notNull()
 			.default(sql`(unixepoch())`),

@@ -45,7 +45,10 @@ CREATE TABLE tasks (
   sub_total INTEGER NOT NULL DEFAULT 0,
   sub_done INTEGER NOT NULL DEFAULT 0,
   progress_message TEXT,
+  blocked_reason TEXT,
   commit_hash TEXT,
+  evidence_json TEXT,
+  files_touched TEXT,
   created_at INTEGER NOT NULL DEFAULT (unixepoch()),
   updated_at INTEGER NOT NULL DEFAULT (unixepoch()),
   reported_at INTEGER

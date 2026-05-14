@@ -422,7 +422,10 @@ describe('task schemas', () => {
 			subTotal: 0,
 			subDone: 0,
 			progressMessage: null,
+			blockedReason: null,
 			commitHash: null,
+			evidence: null,
+			filesTouched: null,
 			createdAt: '2025-01-01T00:00:00Z',
 			updatedAt: '2025-01-01T00:00:00Z',
 			reportedAt: null

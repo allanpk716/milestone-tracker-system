@@ -19,7 +19,9 @@ import {
 	adminTaskAction,
 	updateTask,
 	listTasks,
-	listKanbanData
+	listKanbanData,
+	blockTask,
+	unblockTask
 } from './task-service.js';
 
 // ── Test database setup ──────────────────────────────────────────────────────
@@ -62,6 +64,9 @@ CREATE TABLE tasks (
   sub_done INTEGER NOT NULL DEFAULT 0,
   progress_message TEXT,
   commit_hash TEXT,
+  blocked_reason TEXT,
+  evidence_json TEXT,
+  files_touched TEXT,
   created_at INTEGER NOT NULL DEFAULT (unixepoch()),
   updated_at INTEGER NOT NULL DEFAULT (unixepoch()),
   reported_at INTEGER
@@ -519,5 +524,258 @@ describe('cross-slice data flow', () => {
 		const moduleTasks = await listTasks(db, { moduleId: modId });
 		expect(moduleTasks).toHaveLength(3);
 		expect(moduleTasks.every((t) => t.status === 'done')).toBe(true);
+	});
+});
+
+// ── 5. Block / Unblock lifecycle ─────────────────────────────────────────────
+
+describe('block / unblock lifecycle', () => {
+	it('claim → block (with reason) → status is blocked, blockedReason set', async () => {
+		const ms = await seedMilestone();
+		const [taskId] = await confirmAndGetTaskIds(ms.id!);
+
+		await claimTask(db, taskId, { assignee: 'agent-a' });
+
+		const blocked = await blockTask(db, taskId, { reason: 'Waiting for API credentials' });
+		expect('error' in blocked).toBe(false);
+		expect(blocked.task!.status).toBe('blocked');
+		expect(blocked.task!.blockedReason).toBe('Waiting for API credentials');
+	});
+
+	it('block → unblock → status back to in-progress, blockedReason cleared', async () => {
+		const ms = await seedMilestone();
+		const [taskId] = await confirmAndGetTaskIds(ms.id!);
+
+		await claimTask(db, taskId, { assignee: 'agent-a' });
+		await blockTask(db, taskId, { reason: 'Dependency issue' });
+
+		const unblocked = await unblockTask(db, taskId, { message: 'Resolved dependency' });
+		expect('error' in unblocked).toBe(false);
+		expect(unblocked.task!.status).toBe('in-progress');
+		expect(unblocked.task!.blockedReason).toBeNull();
+		expect(unblocked.task!.progressMessage).toBe('Resolved dependency');
+	});
+
+	it('full lifecycle: claim → block → unblock → progress → complete', async () => {
+		const ms = await seedMilestone();
+		const [taskId] = await confirmAndGetTaskIds(ms.id!);
+
+		// Claim
+		const claimed = await claimTask(db, taskId, { assignee: 'agent-a' });
+		expect(claimed.task!.status).toBe('in-progress');
+
+		// Block
+		const blocked = await blockTask(db, taskId, { reason: 'Env var missing' });
+		expect(blocked.task!.status).toBe('blocked');
+		expect(blocked.task!.blockedReason).toBe('Env var missing');
+
+		// Unblock
+		const unblocked = await unblockTask(db, taskId, { message: 'Got the env var' });
+		expect(unblocked.task!.status).toBe('in-progress');
+		expect(unblocked.task!.blockedReason).toBeNull();
+
+		// Progress
+		const progressed = await progressTask(db, taskId, {
+			progressMessage: 'Almost done',
+			subTotal: 4,
+			subDone: 3
+		});
+		expect(progressed.task!.subDone).toBe(3);
+
+		// Complete
+		const completed = await completeTask(db, taskId, { commitHash: 'a1b2c3' });
+		expect(completed.task!.status).toBe('done');
+		expect(completed.task!.reportedAt).not.toBeNull();
+	});
+
+	it('block on todo task → invalid_status', async () => {
+		const ms = await seedMilestone();
+		const [taskId] = await confirmAndGetTaskIds(ms.id!);
+
+		const result = await blockTask(db, taskId, { reason: 'Cannot start' });
+		expect('error' in result).toBe(true);
+		expect(result.error).toBe('invalid_status');
+		if ('currentStatus' in result) {
+			expect(result.currentStatus).toBe('todo');
+		}
+	});
+
+	it('block on done task → invalid_status', async () => {
+		const ms = await seedMilestone();
+		const [taskId] = await confirmAndGetTaskIds(ms.id!);
+
+		await driveTaskToDone(taskId, 'agent-a');
+
+		const result = await blockTask(db, taskId, { reason: 'Too late' });
+		expect('error' in result).toBe(true);
+		expect(result.error).toBe('invalid_status');
+		if ('currentStatus' in result) {
+			expect(result.currentStatus).toBe('done');
+		}
+	});
+
+	it('unblock on non-blocked task → invalid_status', async () => {
+		const ms = await seedMilestone();
+		const [taskId] = await confirmAndGetTaskIds(ms.id!);
+
+		await claimTask(db, taskId, { assignee: 'agent-a' });
+
+		const result = await unblockTask(db, taskId, { message: 'Nothing to unblock' });
+		expect('error' in result).toBe(true);
+		expect(result.error).toBe('invalid_status');
+		if ('currentStatus' in result) {
+			expect(result.currentStatus).toBe('in-progress');
+		}
+	});
+
+	it('block on non-existent task → not_found', async () => {
+		const result = await blockTask(db, 'TASK-99999', { reason: 'ghost' });
+		expect('error' in result).toBe(true);
+		expect(result.error).toBe('not_found');
+	});
+
+	it('unblock on non-existent task → not_found', async () => {
+		const result = await unblockTask(db, 'TASK-99999', { message: 'ghost' });
+		expect('error' in result).toBe(true);
+		expect(result.error).toBe('not_found');
+	});
+
+	it('unblock without message preserves existing progressMessage', async () => {
+		const ms = await seedMilestone();
+		const [taskId] = await confirmAndGetTaskIds(ms.id!);
+
+		await claimTask(db, taskId, { assignee: 'agent-a' });
+		await progressTask(db, taskId, { progressMessage: 'Before block' });
+		await blockTask(db, taskId, { reason: 'Paused' });
+
+		const unblocked = await unblockTask(db, taskId, {});
+		expect('error' in unblocked).toBe(false);
+		expect(unblocked.task!.progressMessage).toBe('Before block');
+	});
+});
+
+// ── 6. Complete with evidence and filesTouched ───────────────────────────────
+
+describe('complete with evidence and filesTouched', () => {
+	it('complete with evidence stores parsed JSON in evidence field', async () => {
+		const ms = await seedMilestone();
+		const [taskId] = await confirmAndGetTaskIds(ms.id!);
+
+		await claimTask(db, taskId, { assignee: 'agent-a' });
+
+		const evidence = [
+			{ command: 'npx vitest run', exitCode: 0, verdict: 'pass' },
+			{ command: 'npx lint', exitCode: 0, verdict: 'pass' }
+		];
+
+		const completed = await completeTask(db, taskId, { commitHash: 'e1e2e3', evidence });
+		expect('error' in completed).toBe(false);
+		expect(completed.task!.status).toBe('done');
+		expect(completed.task!.evidence).toEqual(evidence);
+		expect(completed.task!.evidence).toHaveLength(2);
+	});
+
+	it('complete with filesTouched stores parsed JSON in filesTouched field', async () => {
+		const ms = await seedMilestone();
+		const [taskId] = await confirmAndGetTaskIds(ms.id!);
+
+		await claimTask(db, taskId, { assignee: 'agent-a' });
+
+		const files = ['src/lib/server/task-service.ts', 'src/lib/db/schema.ts'];
+
+		const completed = await completeTask(db, taskId, { commitHash: 'f1f2f3', filesTouched: files });
+		expect('error' in completed).toBe(false);
+		expect(completed.task!.status).toBe('done');
+		expect(completed.task!.filesTouched).toEqual(files);
+		expect(completed.task!.filesTouched).toHaveLength(2);
+	});
+
+	it('complete with both evidence and filesTouched stores both', async () => {
+		const ms = await seedMilestone();
+		const [taskId] = await confirmAndGetTaskIds(ms.id!);
+
+		await claimTask(db, taskId, { assignee: 'agent-a' });
+
+		const evidence = [
+			{ command: 'npx vitest run', exitCode: 0, verdict: 'pass' }
+		];
+		const files = ['src/lib/server/lifecycle.test.ts'];
+
+		const completed = await completeTask(db, taskId, {
+			commitHash: 'g1g2g3',
+			evidence,
+			filesTouched: files
+		});
+
+		expect('error' in completed).toBe(false);
+		expect(completed.task!.evidence).toEqual(evidence);
+		expect(completed.task!.filesTouched).toEqual(files);
+	});
+
+	it('complete with empty evidence/filesTouched stores null', async () => {
+		const ms = await seedMilestone();
+		const [taskId] = await confirmAndGetTaskIds(ms.id!);
+
+		await claimTask(db, taskId, { assignee: 'agent-a' });
+
+		const completed = await completeTask(db, taskId, {
+			commitHash: 'h1h2h3',
+			evidence: [],
+			filesTouched: []
+		});
+
+		expect('error' in completed).toBe(false);
+		expect(completed.task!.evidence).toBeNull();
+		expect(completed.task!.filesTouched).toBeNull();
+	});
+
+	it('complete without evidence/filesTouched returns null for both', async () => {
+		const ms = await seedMilestone();
+		const [taskId] = await confirmAndGetTaskIds(ms.id!);
+
+		await claimTask(db, taskId, { assignee: 'agent-a' });
+
+		const completed = await completeTask(db, taskId, { commitHash: 'i1i2i3' });
+
+		expect('error' in completed).toBe(false);
+		expect(completed.task!.evidence).toBeNull();
+		expect(completed.task!.filesTouched).toBeNull();
+	});
+
+	it('full lifecycle with evidence: claim → progress → block → unblock → complete + evidence + files', async () => {
+		const ms = await seedMilestone();
+		const [taskId] = await confirmAndGetTaskIds(ms.id!);
+
+		await claimTask(db, taskId, { assignee: 'agent-full' });
+		await progressTask(db, taskId, { progressMessage: 'Working' });
+		await blockTask(db, taskId, { reason: 'Blocked temporarily' });
+
+		const unblocked = await unblockTask(db, taskId, { message: 'Unblocked' });
+		expect(unblocked.task!.status).toBe('in-progress');
+
+		const evidence = [
+			{ command: 'npx vitest run src/lib/server/lifecycle.test.ts', exitCode: 0, verdict: 'pass' },
+			{ command: 'npm run build', exitCode: 0, verdict: 'pass' }
+		];
+		const files = [
+			'src/lib/server/task-service.ts',
+			'src/lib/db/schema.ts',
+			'src/lib/server/lifecycle.test.ts'
+		];
+
+		const completed = await completeTask(db, taskId, {
+			commitHash: 'full-lifecycle',
+			progressMessage: 'All done with evidence',
+			evidence,
+			filesTouched: files
+		});
+
+		expect('error' in completed).toBe(false);
+		expect(completed.task!.status).toBe('done');
+		expect(completed.task!.blockedReason).toBeNull();
+		expect(completed.task!.evidence).toHaveLength(2);
+		expect(completed.task!.filesTouched).toHaveLength(3);
+		expect(completed.task!.commitHash).toBe('full-lifecycle');
+		expect(completed.task!.reportedAt).not.toBeNull();
 	});
 });

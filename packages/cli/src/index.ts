@@ -9,6 +9,10 @@ import { registerProgressCommand } from './commands/progress.js';
 import { registerCompleteCommand } from './commands/complete.js';
 import { registerShowCommand } from './commands/show.js';
 import { registerMineCommand } from './commands/mine.js';
+import { registerBlockCommand } from './commands/block.js';
+import { registerUnblockCommand } from './commands/unblock.js';
+import { registerModulesListCommand } from './commands/modules-list.js';
+import { registerModulesShowCommand } from './commands/modules-show.js';
 
 const __dirname = new URL('.', import.meta.url).pathname;
 // Read version from package.json
@@ -49,6 +53,16 @@ registerProgressCommand(tasks, getConfig);
 registerCompleteCommand(tasks, getConfig);
 registerShowCommand(tasks, getConfig);
 registerMineCommand(tasks, getConfig);
+registerBlockCommand(tasks, getConfig);
+registerUnblockCommand(tasks, getConfig);
+
+// Register modules subcommand group
+const modules = program
+  .command('modules')
+  .description('模块管理命令');
+
+registerModulesListCommand(modules, getConfig);
+registerModulesShowCommand(modules, getConfig);
 
 // Parse and execute
 program.parse(process.argv);
