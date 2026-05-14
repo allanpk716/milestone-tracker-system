@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "mode": "debug",
+  "slug": "http-172-18-200-47-30002-login-500-internal-error",
+  "issue": "http://172.18.200.47:30002/login  我登录了这个，提示：500\nInternal Error",
+  "status": "active",
+  "phase": "queued",
+  "createdAt": 1778662000015,
+  "updatedAt": 1778662000015,
+  "logPath": "C:\\WorkSpace\\agent\\milestone-tracker-system\\.gsd\\debug\\http-172-18-200-47-30002-login-500-internal-error.log",
+  "lastError": null
+}

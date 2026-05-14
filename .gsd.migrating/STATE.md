@@ -1,13 +1,14 @@
 # GSD State
 
-**Active Milestone:** M002: 部署、日志与自动化测试
-**Active Slice:** S01: 结构化日志 + 健康检查
-**Phase:** planning
-**Requirements Status:** 7 active · 0 validated · 0 deferred · 0 out of scope
+**Active Milestone:** M003: AI Agent 可用性增强
+**Active Slice:** S05: S05
+**Phase:** summarizing
+**Requirements Status:** 5 active · 3 validated · 0 deferred · 0 out of scope
 
 ## Milestone Registry
 - ✅ **M001:** MVP 核心功能
-- 🔄 **M002:** 部署、日志与自动化测试
+- ✅ **M002:** 部署、日志与自动化测试
+- 🔄 **M003:** AI Agent 可用性增强
 
 ## Recent Decisions
 - None recorded
@@ -16,4 +17,4 @@
 - None
 
 ## Next Action
-Slice S01 has no DB tasks. Plan slice tasks before execution.
+All tasks done in S05. Write slice summary and complete slice.

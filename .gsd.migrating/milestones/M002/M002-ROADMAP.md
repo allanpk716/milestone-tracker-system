@@ -12,16 +12,16 @@
 
 ## Slices
 
-- [ ] **S01: 结构化日志 + 健康检查** `risk:medium` `depends:[]`
+- [x] **S01: S01** `risk:medium` `depends:[]`
   > After this: 所有日志分级写入文件（logs/app-YYYY-MM-DD.log），GET /api/health 返回服务状态
 
-- [ ] **S02: 部署脚本 + 服务注册 + 隐私保护** `risk:high` `depends:[S01]`
+- [x] **S02: S02** `risk:high` `depends:[]`
   > After this: 执行 deploy.bat 后远程服务可访问 http://172.18.200.47:30002/api/health 返回 200，NSSM 管理自启动
 
-- [ ] **S03: E2E 自动化测试 + /release 技能** `risk:medium` `depends:[S02]`
+- [x] **S03: S03** `risk:medium` `depends:[]`
   > After this: 部署后 E2E 测试脚本全部通过（健康检查/登录/API认证/核心业务流），/release 命令可用
 
-- [ ] **S04: 文档更新** `risk:low` `depends:[S03]`
+- [x] **S04: S04** `risk:low` `depends:[]`
   > After this: README < 80 行精简导航，独立部署文档 docs/deployment.md 完整可操作
 
 ## Boundary Map

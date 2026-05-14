@@ -16,3 +16,8 @@
 | D008 |  | deployment | 部署模式选择 | 全量推送（本地构建 → SCP build/ + node_modules/ → 远程执行） | 远程已有 Node.js 22.14.0，不需要构建工具链。全量推送保证依赖完整，避免远程 npm install 的网络/平台问题。参考 update-hub 的 SCP + NSSM 模式。 | Yes | collaborative |
 | D009 |  | observability | 结构化日志方案 | 自实现轻量级日志模块（零外部依赖），分级 + 文件轮转 | 项目依赖极简（仅 better-sqlite3 + drizzle + zod + marked + dotenv），不引入 pino/winston。自实现满足需求且代码量小。 | Yes | agent |
 | D010 |  | security | 部署配置隐私保护策略 | deploy-config.bat.example 模板 + gitignore 排除真实配置 | 参考 update-hub 的 release-config.bat 模式，成熟可靠。确保 git 历史中永远不含密码/key。 | Yes | collaborative |
+| D011 |  | api | block/unblock API 端点设计 | 新增独立端点 POST /api/tasks/[id]/block 和 POST /api/tasks/[id]/unblock | 与 claim/complete/progress 保持一致的 API 模式——每个 Agent 操作一个独立端点，语义清晰、校验独立、错误信息明确。复用 admin action 语义不够明确且 admin action 不应暴露给 Agent 级别用户。 | Yes | collaborative |
+| D012 |  | cli | CLI --json 实现方式 | 每个命令加 --json 布尔标志，action 内分支输出 | 最小改动，不引入全局中间件或 --format 选项。--json 标志与 Commander.js 的 .option() 完美契合。 | Yes | collaborative |
+| D013 |  | api | complete 状态流转 | 保持 in-progress → done 直接完成，不加 submit/review 步骤 | 代码已支持 in-progress 和 review 都可 complete。Agent 场景不需要人工审核环节，简单直接。 | Yes | collaborative |
+| D014 |  | database | evidence 存储方案 | DB 新增 evidence_json TEXT + files_touched TEXT 列（nullable），与 references 列模式一致 | evidence 和 task 是 1:1 关系，JSON 字符串存 TEXT 列简单直接。独立 evidence 表是过度设计。 | Yes | collaborative |
+| D015 |  | architecture | GSD2 集成架构 | 参照 github-sync 架构写 GSD2 extension（index.js + cli.js + sync.js + mapping.js + extension-manifest.json），用 execFileSync 包装 mt-cli 命令 | github-sync 已验证的成熟模式：execFileSync 包装外部 CLI、ok/error Result 类型、mapping 持久化、auto-post-unit 钩子集成、非阻塞设计。完全适用于 mt-cli 集成。Skill 方式体验差，Agent 需要自己拼命令不可靠。 | Yes | collaborative |

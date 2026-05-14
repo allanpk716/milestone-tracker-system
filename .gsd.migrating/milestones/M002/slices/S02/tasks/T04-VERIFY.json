@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "taskId": "T04",
+  "unitId": "M002/S02/T04",
+  "timestamp": 1778649860696,
+  "passed": false,
+  "discoverySource": "task-plan",
+  "checks": [
+    {
+      "command": "cd C:/WorkSpace/agent/milestone-tracker-system/.gsd/worktrees/M002",
+      "exitCode": 0,
+      "durationMs": 107,
+      "verdict": "pass"
+    },
+    {
+      "command": "test -f scripts/start-service.bat",
+      "exitCode": 1,
+      "durationMs": 109,
+      "verdict": "fail"
+    },
+    {
+      "command": "test -f scripts/stop-service.bat",
+      "exitCode": 1,
+      "durationMs": 112,
+      "verdict": "fail"
+    },
+    {
+      "command": "test -f scripts/uninstall-service.bat",
+      "exitCode": 1,
+      "durationMs": 111,
+      "verdict": "fail"
+    },
+    {
+      "command": "grep -q 'nssm start' scripts/start-service.bat",
+      "exitCode": 127,
+      "durationMs": 207,
+      "verdict": "fail"
+    },
+    {
+      "command": "grep -q 'nssm stop' scripts/stop-service.bat",
+      "exitCode": 127,
+      "durationMs": 203,
+      "verdict": "fail"
+    },
+    {
+      "command": "grep -q 'nssm remove' scripts/uninstall-service.bat",
+      "exitCode": 127,
+      "durationMs": 201,
+      "verdict": "fail"
+    }
+  ],
+  "retryAttempt": 1,
+  "maxRetries": 2
+}

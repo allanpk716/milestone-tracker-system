@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "taskId": "T02",
+  "unitId": "M003/S02/T02",
+  "timestamp": 1778689936700,
+  "passed": false,
+  "discoverySource": "task-plan",
+  "checks": [
+    {
+      "command": "npx vitest run packages/cli/src/__tests__/block-unblock.test.ts",
+      "exitCode": 1,
+      "durationMs": 2846,
+      "verdict": "fail"
+    }
+  ],
+  "retryAttempt": 1,
+  "maxRetries": 2
+}

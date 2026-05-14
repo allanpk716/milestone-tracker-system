@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "taskId": "T04",
+  "unitId": "M003/S03/T04",
+  "timestamp": 1778691114108,
+  "passed": false,
+  "discoverySource": "task-plan",
+  "checks": [
+    {
+      "command": "cd /c/WorkSpace/agent/milestone-tracker-system/.gsd/worktrees/M003",
+      "exitCode": 1,
+      "durationMs": 110,
+      "verdict": "fail"
+    },
+    {
+      "command": "npx vitest run packages/cli/src/__tests__/modules-commands.test.ts",
+      "exitCode": 1,
+      "durationMs": 2881,
+      "verdict": "fail"
+    }
+  ],
+  "retryAttempt": 1,
+  "maxRetries": 2
+}
