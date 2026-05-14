@@ -13,6 +13,7 @@
 					<span class="text-lg font-bold">📊 里程碑管理</span>
 				</a>
 				<div class="flex items-center gap-4">
+					<span class="text-xs text-gray-400 font-mono" title="构建版本">v{__APP_VERSION__}</span>
 					<a
 						href="/milestones/create"
 						class="text-sm text-gray-600 hover:text-blue-600 transition-colors"

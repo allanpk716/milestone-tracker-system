@@ -10,6 +10,8 @@ declare global {
 		// interface PageState {}
 		// interface Platform {}
 	}
+	// Build-time version injected from package.json via vite define
+	const __APP_VERSION__: string;
 }
 
 export {};

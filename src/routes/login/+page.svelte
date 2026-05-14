@@ -79,7 +79,7 @@
 		</form>
 
 		<p class="text-center text-xs text-gray-400 mt-6">
-			Milestone Tracker v0.1.0
+			Milestone Tracker v{__APP_VERSION__}
 		</p>
 	</div>
 </div>
