@@ -1,5 +1,5 @@
 {
-  "compiledAt": "2026-05-15T14:15:53.246Z",
+  "compiledAt": "2026-05-15T14:29:45.280Z",
   "milestoneId": "M005",
   "pipeline": {
     "clarifyRoundLimit": 3,
@@ -118,12 +118,16 @@
       "id": "execute-task:M005:S03:T01",
       "kind": "unit",
       "dependsOn": [],
-      "writes": [],
+      "writes": [
+        "src/lib/server/llm-client.ts",
+        "src/lib/server/llm-client.test.ts",
+        ".env.example"
+      ],
       "metadata": {
         "unitType": "execute-task",
         "unitId": "M005.S03.T01",
-        "title": "Configurable LLM_TIMEOUT_MS in LlmClient",
-        "status": "pending"
+        "title": "LlmClient now reads LLM_TIMEOUT_MS env var with 180s default",
+        "status": "complete"
       }
     },
     {
@@ -132,24 +136,83 @@
       "dependsOn": [
         "execute-task:M005:S03:T01"
       ],
-      "writes": [],
+      "writes": [
+        "src/lib/components/DecomposeStream.svelte"
+      ],
       "metadata": {
         "unitType": "execute-task",
         "unitId": "M005.S03.T02",
-        "title": "Enhance decompose cancel button and stream animation",
-        "status": "pending"
+        "title": "Enhanced cancel button to prominent red terminate button with ✕ icon, upgraded fadeSlideIn animation with scale transition",
+        "status": "complete"
+      }
+    },
+    {
+      "id": "execute-task:M005:S03:T03",
+      "kind": "unit",
+      "dependsOn": [
+        "execute-task:M005:S03:T02"
+      ],
+      "writes": [
+        ".env.example",
+        "src/lib/server/llm-client.ts",
+        "src/lib/components/DecomposeStream.svelte"
+      ],
+      "metadata": {
+        "unitType": "execute-task",
+        "unitId": "M005.S03.T03",
+        "title": "Full build and test regression verified: 18 files, 438 tests pass, LLM_TIMEOUT_MS documented in .env.example",
+        "status": "complete"
       }
     },
     {
       "id": "complete-slice:M005:S03",
       "kind": "verification",
       "dependsOn": [
-        "execute-task:M005:S03:T02"
+        "execute-task:M005:S03:T03"
       ],
       "metadata": {
         "unitType": "complete-slice",
         "unitId": "M005.S03",
-        "title": "LLM 超时配置 + 拆解增强",
+        "title": "S03",
+        "status": "complete"
+      }
+    },
+    {
+      "id": "execute-task:M005:S04:T01",
+      "kind": "unit",
+      "dependsOn": [],
+      "writes": [],
+      "metadata": {
+        "unitType": "execute-task",
+        "unitId": "M005.S04.T01",
+        "title": "Restructure detail tab to left-right split layout with MdViewer",
+        "status": "pending"
+      }
+    },
+    {
+      "id": "execute-task:M005:S04:T02",
+      "kind": "unit",
+      "dependsOn": [
+        "execute-task:M005:S04:T01"
+      ],
+      "writes": [],
+      "metadata": {
+        "unitType": "execute-task",
+        "unitId": "M005.S04.T02",
+        "title": "Verify layout rendering and clean up unused code",
+        "status": "pending"
+      }
+    },
+    {
+      "id": "complete-slice:M005:S04",
+      "kind": "verification",
+      "dependsOn": [
+        "execute-task:M005:S04:T02"
+      ],
+      "metadata": {
+        "unitType": "complete-slice",
+        "unitId": "M005.S04",
+        "title": "详情页 Markdown 渲染 + 左右分栏",
         "status": "pending"
       }
     }

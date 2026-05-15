@@ -65,15 +65,6 @@ This file is the explicit capability and coverage contract for the project.
 - Primary owning slice: M005/S02
 - Validation: mapped
 
-### R013 — LLM 客户端连接超时从硬编码 30s 改为读取 .env 的 LLM_TIMEOUT_MS 环境变量，默认值 180000ms（3 分钟）。超时仅用于初始连接阶段，流式输出阶段不超时（LLM 可能输出很久）。
-- Class: continuity
-- Status: active
-- Description: LLM 客户端连接超时从硬编码 30s 改为读取 .env 的 LLM_TIMEOUT_MS 环境变量，默认值 180000ms（3 分钟）。超时仅用于初始连接阶段，流式输出阶段不超时（LLM 可能输出很久）。
-- Why it matters: 当前 30s 超时太短，某些 LLM 响应首 token 很慢导致频繁超时错误（LLM request timed out after 30000ms）。3 分钟默认值适合流式输出场景。
-- Source: user
-- Primary owning slice: M005/S03
-- Validation: mapped
-
 ### R014 — 拆解过程中的终止按钮视觉增强（当前是小字下划线，改为醒目的按钮样式）。流式输出过程更可见——每个模块实时出现时有动画效果。
 - Class: primary-user-loop
 - Status: active
@@ -125,6 +116,15 @@ This file is the explicit capability and coverage contract for the project.
 - Primary owning slice: M005/S01
 - Validation: DELETE /api/milestones/[id] implemented with status protection (403 for in-progress) and cascade deletion of modules/tasks for draft/completed/archived — verified by 6 unit tests and clean build in S01
 
+### R013 — LLM 客户端连接超时从硬编码 30s 改为读取 .env 的 LLM_TIMEOUT_MS 环境变量，默认值 180000ms（3 分钟）。超时仅用于初始连接阶段，流式输出阶段不超时（LLM 可能输出很久）。
+- Class: continuity
+- Status: validated
+- Description: LLM 客户端连接超时从硬编码 30s 改为读取 .env 的 LLM_TIMEOUT_MS 环境变量，默认值 180000ms（3 分钟）。超时仅用于初始连接阶段，流式输出阶段不超时（LLM 可能输出很久）。
+- Why it matters: 当前 30s 超时太短，某些 LLM 响应首 token 很慢导致频繁超时错误（LLM request timed out after 30000ms）。3 分钟默认值适合流式输出场景。
+- Source: user
+- Primary owning slice: M005/S03
+- Validation: LlmClient reads LLM_TIMEOUT_MS env var with 180000ms default; 14 unit tests pass including env var parsing, override, and invalid-value fallback. .env.example documents the config.
+
 ## Deferred
 
 ## Out of Scope
@@ -144,13 +144,13 @@ This file is the explicit capability and coverage contract for the project.
 | R010 | core-capability | validated | M005/S01 | none | DELETE /api/milestones/[id] implemented with status protection (403 for in-progress) and cascade deletion of modules/tasks for draft/completed/archived — verified by 6 unit tests and clean build in S01 |
 | R011 | primary-user-loop | active | M005/S02 | M005/S01 | mapped |
 | R012 | primary-user-loop | active | M005/S02 | none | mapped |
-| R013 | continuity | active | M005/S03 | none | mapped |
+| R013 | continuity | validated | M005/S03 | none | LlmClient reads LLM_TIMEOUT_MS env var with 180000ms default; 14 unit tests pass including env var parsing, override, and invalid-value fallback. .env.example documents the config. |
 | R014 | primary-user-loop | active | M005/S03 | none | mapped |
 | R015 | primary-user-loop | active | M005/S04 | none | mapped |
 
 ## Coverage Summary
 
-- Active requirements: 10
-- Mapped to slices: 10
-- Validated: 4 (R002, R003, R009, R010)
+- Active requirements: 9
+- Mapped to slices: 9
+- Validated: 5 (R002, R003, R009, R010, R013)
 - Unmapped active requirements: 0

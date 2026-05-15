@@ -1,7 +1,7 @@
 # Codebase Map
 
-Generated: 2026-05-15T14:16:11Z | Files: 195 | Described: 0/195
-<!-- gsd:codebase-meta {"generatedAt":"2026-05-15T14:16:11Z","fingerprint":"f2277ab37311d0d8d80a60a687cb63a32f84aafe","fileCount":195,"truncated":false} -->
+Generated: 2026-05-15T14:20:22Z | Files: 174 | Described: 0/174
+<!-- gsd:codebase-meta {"generatedAt":"2026-05-15T14:20:22Z","fingerprint":"12dbd9a57e5a7ff1aa9065083864c149103d1535","fileCount":174,"truncated":false} -->
 
 ### (root)/
 - `.env.example`
@@ -20,38 +20,6 @@ Generated: 2026-05-15T14:16:11Z | Files: 195 | Described: 0/195
 ### "docs/\350\256\276\350\256\241\350\276\223\345\205\245\343\200\201\351\234\200\346\261\202\346\226\207\346\241\243/
 - `"docs/\350\256\276\350\256\241\350\276\223\345\205\245\343\200\201\351\234\200\346\261\202\346\226\207\346\241\243/milestone-tracker-dev-notes.md"`
 - `"docs/\350\256\276\350\256\241\350\276\223\345\205\245\343\200\201\351\234\200\346\261\202\346\226\207\346\241\243/milestone-tracker-system-spec-2026-05-12.md"`
-
-### .gsd.migrating/
-- `.gsd.migrating/CODEBASE.md`
-- `.gsd.migrating/doctor-history.jsonl`
-- `.gsd.migrating/event-log.jsonl`
-- `.gsd.migrating/gsd.db`
-- `.gsd.migrating/gsd.db-shm`
-- `.gsd.migrating/gsd.db-wal`
-- `.gsd.migrating/metrics.json`
-- `.gsd.migrating/notifications.jsonl`
-- `.gsd.migrating/PROJECT.md`
-- `.gsd.migrating/REQUIREMENTS.md`
-- `.gsd.migrating/state-manifest.json`
-- `.gsd.migrating/STATE.md`
-
-### .gsd.migrating/audit/
-- `.gsd.migrating/audit/events.jsonl`
-
-### .gsd.migrating/milestones/M003/
-- `.gsd.migrating/milestones/M003/M003-ROADMAP.md`
-
-### .gsd.migrating/milestones/M003/slices/S05/tasks/
-- `.gsd.migrating/milestones/M003/slices/S05/tasks/T01-SUMMARY.md`
-- `.gsd.migrating/milestones/M003/slices/S05/tasks/T01-VERIFY.json`
-- `.gsd.migrating/milestones/M003/slices/S05/tasks/T02-SUMMARY.md`
-- `.gsd.migrating/milestones/M003/slices/S05/tasks/T02-VERIFY.json`
-- `.gsd.migrating/milestones/M003/slices/S05/tasks/T03-SUMMARY.md`
-- `.gsd.migrating/milestones/M003/slices/S05/tasks/T03-VERIFY.json`
-
-### .gsd.migrating/runtime/
-- `.gsd.migrating/runtime/uok-parity.jsonl`
-- `.gsd.migrating/runtime/uok-plan-v2-graph.json`
 
 ### .playwright-cli/
 - `.playwright-cli/page-2026-05-14T16-05-58-180Z.yml`
@@ -141,6 +109,7 @@ Generated: 2026-05-15T14:16:11Z | Files: 195 | Described: 0/195
 
 ### src/lib/components/
 - `src/lib/components/CompareSuggestions.svelte`
+- `src/lib/components/ConfirmDialog.svelte`
 - `src/lib/components/DecomposeEditor.svelte`
 - `src/lib/components/DecomposeStream.svelte`
 - `src/lib/components/KanbanModuleCard.svelte`
