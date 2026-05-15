@@ -1,0 +1,52 @@
+{
+  "compiledAt": "2026-05-15T09:59:55.000Z",
+  "milestoneId": "M005",
+  "pipeline": {
+    "clarifyRoundLimit": 3,
+    "researchSynthesized": false,
+    "draftContextIncluded": false,
+    "finalizedContextIncluded": true,
+    "sourcePhase": "executing"
+  },
+  "nodes": [
+    {
+      "id": "execute-task:M005:S01:T01",
+      "kind": "unit",
+      "dependsOn": [],
+      "writes": [],
+      "metadata": {
+        "unitType": "execute-task",
+        "unitId": "M005.S01.T01",
+        "title": "Add deleteMilestone service method with status guard + unit tests",
+        "status": "pending"
+      }
+    },
+    {
+      "id": "execute-task:M005:S01:T02",
+      "kind": "unit",
+      "dependsOn": [
+        "execute-task:M005:S01:T01"
+      ],
+      "writes": [],
+      "metadata": {
+        "unitType": "execute-task",
+        "unitId": "M005.S01.T02",
+        "title": "Wire DELETE handler in +server.ts route",
+        "status": "pending"
+      }
+    },
+    {
+      "id": "complete-slice:M005:S01",
+      "kind": "verification",
+      "dependsOn": [
+        "execute-task:M005:S01:T02"
+      ],
+      "metadata": {
+        "unitType": "complete-slice",
+        "unitId": "M005.S01",
+        "title": "删除 API + Service",
+        "status": "pending"
+      }
+    }
+  ]
+}
