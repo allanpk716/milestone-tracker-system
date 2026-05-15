@@ -1,0 +1,109 @@
+- generic [ref=e3]:
+  - navigation [ref=e4]:
+    - generic [ref=e6]:
+      - link "📊 里程碑管理" [ref=e7] [cursor=pointer]:
+        - /url: /
+        - generic [ref=e8]: 📊
+        - generic [ref=e9]: 里程碑管理
+      - generic [ref=e10]:
+        - generic "构建版本" [ref=e11]: v0.2.0
+        - link "+ 新建" [ref=e13] [cursor=pointer]:
+          - /url: /milestones/create
+          - generic [ref=e14]: +
+          - text: 新建
+        - button "退出" [ref=e15]
+  - main [ref=e16]:
+    - generic [ref=e17]:
+      - generic [ref=e18]:
+        - heading "里程碑" [level=1] [ref=e19]
+        - paragraph [ref=e20]: 共 6 个
+      - link "+ 新建里程碑" [ref=e21] [cursor=pointer]:
+        - /url: /milestones/create
+        - generic [ref=e22]: +
+        - text: 新建里程碑
+    - generic [ref=e23]:
+      - generic [ref=e24]:
+        - text: 进行中
+        - generic [ref=e26]: "2"
+      - generic [ref=e27]:
+        - text: 草稿
+        - generic [ref=e29]: "1"
+      - generic [ref=e30]:
+        - text: 已完成
+        - generic [ref=e32]: "2"
+      - generic [ref=e33]:
+        - text: 阻塞
+        - generic [ref=e35]: "1"
+    - generic [ref=e36]:
+      - link "移动端适配 M006 阻塞 2026/05/15 🔗 github.com 响应式布局、触摸交互、PWA 支持" [ref=e38] [cursor=pointer]:
+        - /url: /milestones/M006
+        - generic [ref=e40]:
+          - generic [ref=e41]:
+            - generic [ref=e42]:
+              - heading "移动端适配" [level=3] [ref=e43]
+              - paragraph [ref=e44]: M006
+            - generic [ref=e45]: 阻塞
+          - generic [ref=e46]:
+            - generic [ref=e47]: 2026/05/15
+            - generic "https://github.com/example/project" [ref=e48]: 🔗 github.com
+          - paragraph [ref=e49]: 响应式布局、触摸交互、PWA 支持
+      - link "性能优化 M005 草稿 2026/05/14 页面加载优化、数据库查询优化、缓存策略" [ref=e51] [cursor=pointer]:
+        - /url: /milestones/M005
+        - generic [ref=e53]:
+          - generic [ref=e54]:
+            - generic [ref=e55]:
+              - heading "性能优化" [level=3] [ref=e56]
+              - paragraph [ref=e57]: M005
+            - generic [ref=e58]: 草稿
+          - generic [ref=e60]: 2026/05/14
+          - paragraph [ref=e61]: 页面加载优化、数据库查询优化、缓存策略
+      - link "交付运维闭环 M004 进行中 2026/05/12 运维监控、故障恢复、交付流程自动化" [ref=e63] [cursor=pointer]:
+        - /url: /milestones/M004
+        - generic [ref=e65]:
+          - generic [ref=e66]:
+            - generic [ref=e67]:
+              - heading "交付运维闭环" [level=3] [ref=e68]
+              - paragraph [ref=e69]: M004
+            - generic [ref=e70]: 进行中
+          - generic [ref=e72]: 2026/05/12
+          - paragraph [ref=e73]: 运维监控、故障恢复、交付流程自动化
+      - link "AI Agent 可用性增强 M003 进行中 2026/05/08 🔗 github.com CLI 工具、Agent E2E 测试、第三方 AI 评估" [ref=e75] [cursor=pointer]:
+        - /url: /milestones/M003
+        - generic [ref=e77]:
+          - generic [ref=e78]:
+            - generic [ref=e79]:
+              - heading "AI Agent 可用性增强" [level=3] [ref=e80]
+              - paragraph [ref=e81]: M003
+            - generic [ref=e82]: 进行中
+          - generic [ref=e83]:
+            - generic [ref=e84]: 2026/05/08
+            - generic "https://github.com/example/project" [ref=e85]: 🔗 github.com
+          - paragraph [ref=e86]: CLI 工具、Agent E2E 测试、第三方 AI 评估
+      - link "部署与自动化测试 M002 已完成 2026/05/05 CI/CD 流水线、日志系统、E2E 测试" [ref=e88] [cursor=pointer]:
+        - /url: /milestones/M002
+        - generic [ref=e90]:
+          - generic [ref=e91]:
+            - generic [ref=e92]:
+              - heading "部署与自动化测试" [level=3] [ref=e93]
+              - paragraph [ref=e94]: M002
+            - generic [ref=e95]: 已完成
+          - generic [ref=e97]: 2026/05/05
+          - paragraph [ref=e98]: CI/CD 流水线、日志系统、E2E 测试
+      - link "MVP 核心功能 M001 已完成 2026/05/01 🔗 github.com 实现用户登录、里程碑管理、任务追踪的核心功能" [ref=e100] [cursor=pointer]:
+        - /url: /milestones/M001
+        - generic [ref=e102]:
+          - generic [ref=e103]:
+            - generic [ref=e104]:
+              - heading "MVP 核心功能" [level=3] [ref=e105]
+              - paragraph [ref=e106]: M001
+            - generic [ref=e107]: 已完成
+          - generic [ref=e108]:
+            - generic [ref=e109]: 2026/05/01
+            - generic "https://github.com/example/project" [ref=e110]: 🔗 github.com
+          - paragraph [ref=e111]: 实现用户登录、里程碑管理、任务追踪的核心功能
+    - generic [ref=e112]:
+      - button "上一个变体 (←)" [ref=e113]:
+        - img [ref=e114]
+      - generic [ref=e116]: A — 卡片网格
+      - button "下一个变体 (→)" [ref=e117]:
+        - img [ref=e118]

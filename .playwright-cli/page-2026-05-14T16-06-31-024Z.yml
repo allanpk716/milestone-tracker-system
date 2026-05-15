@@ -1,0 +1,83 @@
+- generic [ref=e3]:
+  - navigation [ref=e4]:
+    - generic [ref=e6]:
+      - link "📊 里程碑管理" [ref=e7] [cursor=pointer]:
+        - /url: /
+        - generic [ref=e8]: 📊
+        - generic [ref=e9]: 里程碑管理
+      - generic [ref=e10]:
+        - generic "构建版本" [ref=e11]: v0.2.0
+        - link "+ 新建" [ref=e13] [cursor=pointer]:
+          - /url: /milestones/create
+          - generic [ref=e14]: +
+          - text: 新建
+        - button "退出" [ref=e15]
+  - main [ref=e16]:
+    - generic [ref=e17]:
+      - generic [ref=e18]:
+        - heading "里程碑" [level=1] [ref=e19]
+        - paragraph [ref=e20]: 共 6 个
+      - link "+ 新建里程碑" [ref=e21] [cursor=pointer]:
+        - /url: /milestones/create
+        - generic [ref=e22]: +
+        - text: 新建里程碑
+    - generic [ref=e23]:
+      - generic [ref=e24]:
+        - generic [ref=e25]: 名称
+        - generic [ref=e26]: 状态
+        - generic [ref=e27]: 创建日期
+        - generic [ref=e28]: 来源
+      - link "移动端适配 M006 阻塞 05/15 github.com" [ref=e29] [cursor=pointer]:
+        - /url: /milestones/M006
+        - generic [ref=e30]:
+          - heading "移动端适配" [level=3] [ref=e31]
+          - paragraph [ref=e32]: M006
+        - generic [ref=e34]: 阻塞
+        - generic [ref=e35]: 05/15
+        - generic [ref=e36]: github.com
+      - link "性能优化 M005 草稿 05/14 —" [ref=e37] [cursor=pointer]:
+        - /url: /milestones/M005
+        - generic [ref=e38]:
+          - heading "性能优化" [level=3] [ref=e39]
+          - paragraph [ref=e40]: M005
+        - generic [ref=e42]: 草稿
+        - generic [ref=e43]: 05/14
+        - generic [ref=e44]: —
+      - link "交付运维闭环 M004 进行中 05/12 —" [ref=e45] [cursor=pointer]:
+        - /url: /milestones/M004
+        - generic [ref=e46]:
+          - heading "交付运维闭环" [level=3] [ref=e47]
+          - paragraph [ref=e48]: M004
+        - generic [ref=e50]: 进行中
+        - generic [ref=e51]: 05/12
+        - generic [ref=e52]: —
+      - link "AI Agent 可用性增强 M003 进行中 05/08 github.com" [ref=e53] [cursor=pointer]:
+        - /url: /milestones/M003
+        - generic [ref=e54]:
+          - heading "AI Agent 可用性增强" [level=3] [ref=e55]
+          - paragraph [ref=e56]: M003
+        - generic [ref=e58]: 进行中
+        - generic [ref=e59]: 05/08
+        - generic [ref=e60]: github.com
+      - link "部署与自动化测试 M002 已完成 05/05 —" [ref=e61] [cursor=pointer]:
+        - /url: /milestones/M002
+        - generic [ref=e62]:
+          - heading "部署与自动化测试" [level=3] [ref=e63]
+          - paragraph [ref=e64]: M002
+        - generic [ref=e66]: 已完成
+        - generic [ref=e67]: 05/05
+        - generic [ref=e68]: —
+      - link "MVP 核心功能 M001 已完成 05/01 github.com" [ref=e69] [cursor=pointer]:
+        - /url: /milestones/M001
+        - generic [ref=e70]:
+          - heading "MVP 核心功能" [level=3] [ref=e71]
+          - paragraph [ref=e72]: M001
+        - generic [ref=e74]: 已完成
+        - generic [ref=e75]: 05/01
+        - generic [ref=e76]: github.com
+    - generic [ref=e77]:
+      - button "上一个变体 (←)" [ref=e78]:
+        - img [ref=e79]
+      - generic [ref=e81]: B — 表格列表
+      - button "下一个变体 (→)" [ref=e82]:
+        - img [ref=e83]

@@ -1,0 +1,90 @@
+- generic [ref=e3]:
+  - navigation [ref=e4]:
+    - generic [ref=e6]:
+      - link "📊 里程碑管理" [ref=e7] [cursor=pointer]:
+        - /url: /
+        - generic [ref=e8]: 📊
+        - generic [ref=e9]: 里程碑管理
+      - generic [ref=e10]:
+        - generic "构建版本" [ref=e11]: v0.2.0
+        - link "+ 新建" [ref=e13] [cursor=pointer]:
+          - /url: /milestones/create
+          - generic [ref=e14]: +
+          - text: 新建
+        - button "退出" [ref=e15]
+  - main [ref=e16]:
+    - generic [ref=e17]:
+      - generic [ref=e18]:
+        - heading "里程碑" [level=1] [ref=e19]
+        - paragraph [ref=e20]: 共 6 个
+      - link "+ 新建里程碑" [ref=e21] [cursor=pointer]:
+        - /url: /milestones/create
+        - generic [ref=e22]: +
+        - text: 新建里程碑
+    - generic [ref=e23]:
+      - generic [ref=e24]:
+        - generic [ref=e25]:
+          - heading "🚀 进行中" [level=3] [ref=e27]
+          - generic [ref=e28]: "2"
+        - generic [ref=e29]:
+          - link "交付运维闭环 M004 05/12 运维监控、故障恢复、交付流程自动化" [ref=e30] [cursor=pointer]:
+            - /url: /milestones/M004
+            - heading "交付运维闭环" [level=4] [ref=e31]
+            - generic [ref=e32]:
+              - generic [ref=e33]: M004
+              - generic [ref=e34]: 05/12
+            - paragraph [ref=e35]: 运维监控、故障恢复、交付流程自动化
+          - link "AI Agent 可用性增强 M003 05/08 CLI 工具、Agent E2E 测试、第三方 AI 评估" [ref=e36] [cursor=pointer]:
+            - /url: /milestones/M003
+            - heading "AI Agent 可用性增强" [level=4] [ref=e37]
+            - generic [ref=e38]:
+              - generic [ref=e39]: M003
+              - generic [ref=e40]: 05/08
+            - paragraph [ref=e41]: CLI 工具、Agent E2E 测试、第三方 AI 评估
+      - generic [ref=e42]:
+        - generic [ref=e43]:
+          - heading "📝 草稿" [level=3] [ref=e45]
+          - generic [ref=e46]: "1"
+        - link "性能优化 M005 05/14 页面加载优化、数据库查询优化、缓存策略" [ref=e48] [cursor=pointer]:
+          - /url: /milestones/M005
+          - heading "性能优化" [level=4] [ref=e49]
+          - generic [ref=e50]:
+            - generic [ref=e51]: M005
+            - generic [ref=e52]: 05/14
+          - paragraph [ref=e53]: 页面加载优化、数据库查询优化、缓存策略
+      - generic [ref=e54]:
+        - generic [ref=e55]:
+          - heading "✅ 已完成" [level=3] [ref=e57]
+          - generic [ref=e58]: "2"
+        - generic [ref=e59]:
+          - link "部署与自动化测试 M002 05/05 CI/CD 流水线、日志系统、E2E 测试" [ref=e60] [cursor=pointer]:
+            - /url: /milestones/M002
+            - heading "部署与自动化测试" [level=4] [ref=e61]
+            - generic [ref=e62]:
+              - generic [ref=e63]: M002
+              - generic [ref=e64]: 05/05
+            - paragraph [ref=e65]: CI/CD 流水线、日志系统、E2E 测试
+          - link "MVP 核心功能 M001 05/01 实现用户登录、里程碑管理、任务追踪的核心功能" [ref=e66] [cursor=pointer]:
+            - /url: /milestones/M001
+            - heading "MVP 核心功能" [level=4] [ref=e67]
+            - generic [ref=e68]:
+              - generic [ref=e69]: M001
+              - generic [ref=e70]: 05/01
+            - paragraph [ref=e71]: 实现用户登录、里程碑管理、任务追踪的核心功能
+      - generic [ref=e72]:
+        - generic [ref=e73]:
+          - heading "🚫 阻塞" [level=3] [ref=e75]
+          - generic [ref=e76]: "1"
+        - link "移动端适配 M006 05/15 响应式布局、触摸交互、PWA 支持" [ref=e78] [cursor=pointer]:
+          - /url: /milestones/M006
+          - heading "移动端适配" [level=4] [ref=e79]
+          - generic [ref=e80]:
+            - generic [ref=e81]: M006
+            - generic [ref=e82]: 05/15
+          - paragraph [ref=e83]: 响应式布局、触摸交互、PWA 支持
+    - generic [ref=e84]:
+      - button "上一个变体 (←)" [ref=e85]:
+        - img [ref=e86]
+      - generic [ref=e88]: C — 看板分栏
+      - button "下一个变体 (→)" [ref=e89]:
+        - img [ref=e90]
