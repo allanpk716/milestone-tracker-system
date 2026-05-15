@@ -119,10 +119,11 @@
 					<span>AI 正在分析中...</span>
 				</div>
 				<button
-					class="text-xs text-gray-500 hover:text-gray-700 underline transition-colors"
+					class="px-3 py-1.5 text-sm font-medium rounded-lg bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 hover:border-red-300 active:bg-red-200 transition-all shadow-sm inline-flex items-center gap-1.5"
 					onclick={cancelDecompose}
 				>
-					取消
+					<span>✕</span>
+					<span>终止</span>
 				</button>
 			{/if}
 		</div>
@@ -220,11 +221,11 @@
 	@keyframes fadeSlideIn {
 		from {
 			opacity: 0;
-			transform: translateY(8px);
+			transform: translateY(8px) scale(0.97);
 		}
 		to {
 			opacity: 1;
-			transform: translateY(0);
+			transform: translateY(0) scale(1);
 		}
 	}
 </style>

@@ -12,7 +12,7 @@ const logger = createLogger('llm-client');
 
 const DEFAULT_BASE_URL = 'https://api.openai.com/v1';
 const DEFAULT_MODEL = 'gpt-4o-mini';
-const TIMEOUT_MS = 30_000;
+const DEFAULT_TIMEOUT_MS = 180_000;
 
 export class LlmClient {
 	private readonly apiKey: string;
@@ -24,7 +24,7 @@ export class LlmClient {
 		this.apiKey = opts?.apiKey ?? process.env.LLM_API_KEY ?? '';
 		this.model = opts?.model ?? process.env.LLM_MODEL ?? DEFAULT_MODEL;
 		this.baseUrl = (opts?.baseUrl ?? process.env.LLM_BASE_URL ?? DEFAULT_BASE_URL).replace(/\/+$/, '');
-		this.timeoutMs = opts?.timeoutMs ?? TIMEOUT_MS;
+		this.timeoutMs = opts?.timeoutMs ?? (parseInt(process.env.LLM_TIMEOUT_MS ?? '', 10) || DEFAULT_TIMEOUT_MS);
 	}
 
 	/**

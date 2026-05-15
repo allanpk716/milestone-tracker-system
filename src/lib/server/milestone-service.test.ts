@@ -7,7 +7,8 @@ import {
 	createMilestone,
 	listMilestones,
 	getMilestone,
-	updateMilestone
+	updateMilestone,
+	deleteMilestone
 } from './milestone-service.js';
 
 // ── Test database setup ──────────────────────────────────────────────────────
@@ -192,5 +193,88 @@ describe('milestone API — full CRUD cycle', () => {
 		const ms = await createMilestone(db, { title: 'No Change' });
 		const updated = await updateMilestone(db, ms.id, {});
 		expect(updated!.title).toBe('No Change');
+	});
+});
+
+// ── Milestone Delete ─────────────────────────────────────────────────────────
+
+describe('deleteMilestone', () => {
+	it('deletes a draft milestone and returns deleted data', async () => {
+		const ms = await createMilestone(db, { title: 'Draft MS' });
+		const result = await deleteMilestone(db, ms.id);
+		expect(result.status).toBe('deleted');
+		if (result.status === 'deleted') {
+			expect(result.data.id).toBe(ms.id);
+			expect(result.data.title).toBe('Draft MS');
+		}
+		// Verify it's gone
+		const detail = await getMilestone(db, ms.id);
+		expect(detail).toBeNull();
+	});
+
+	it('deletes a completed milestone', async () => {
+		const ms = await createMilestone(db, { title: 'Completed MS' });
+		await updateMilestone(db, ms.id, { status: 'completed' });
+		const result = await deleteMilestone(db, ms.id);
+		expect(result.status).toBe('deleted');
+	});
+
+	it('deletes an archived milestone', async () => {
+		const ms = await createMilestone(db, { title: 'Archived MS' });
+		await updateMilestone(db, ms.id, { status: 'archived' });
+		const result = await deleteMilestone(db, ms.id);
+		expect(result.status).toBe('deleted');
+	});
+
+	it('rejects deletion of in-progress milestone with forbidden', async () => {
+		const ms = await createMilestone(db, { title: 'Active MS' });
+		await updateMilestone(db, ms.id, { status: 'in-progress' });
+		const result = await deleteMilestone(db, ms.id);
+		expect(result.status).toBe('forbidden');
+		if (result.status === 'forbidden') {
+			expect(result.message).toBe('该里程碑正在开发中，无法删除');
+		}
+		// Verify it still exists
+		const detail = await getMilestone(db, ms.id);
+		expect(detail).not.toBeNull();
+	});
+
+	it('returns not_found for non-existent milestone', async () => {
+		const result = await deleteMilestone(db, 'MS-999');
+		expect(result.status).toBe('not_found');
+	});
+
+	it('cascade deletes associated modules and tasks', async () => {
+		const ms = await createMilestone(db, { title: 'Cascade MS' });
+		// Insert module and tasks directly
+		await db.insert(schema.modules).values({
+			id: 'MOD-1-1',
+			milestoneId: ms.id,
+			name: 'Core Module'
+		});
+		await db.insert(schema.tasks).values({
+			id: 'TASK-1',
+			shortId: 1,
+			moduleId: 'MOD-1-1',
+			title: 'Task A'
+		});
+		await db.insert(schema.tasks).values({
+			id: 'TASK-2',
+			shortId: 2,
+			moduleId: 'MOD-1-1',
+			title: 'Task B'
+		});
+
+		// Delete the milestone
+		const result = await deleteMilestone(db, ms.id);
+		expect(result.status).toBe('deleted');
+
+		// Verify modules are gone
+		const modRows = await db.select().from(schema.modules).where(eq(schema.modules.milestoneId, ms.id)).all();
+		expect(modRows).toHaveLength(0);
+
+		// Verify tasks are gone
+		const taskRows = await db.select().from(schema.tasks).where(eq(schema.tasks.moduleId, 'MOD-1-1')).all();
+		expect(taskRows).toHaveLength(0);
 	});
 });

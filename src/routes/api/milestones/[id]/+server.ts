@@ -1,7 +1,7 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types.js';
 import { db } from '$lib/db/index.js';
-import { getMilestone, updateMilestone } from '$lib/server/milestone-service.js';
+import { getMilestone, updateMilestone, deleteMilestone } from '$lib/server/milestone-service.js';
 import { updateMilestoneSchema } from '$lib/schemas/index.js';
 
 export const GET: RequestHandler = async ({ params }) => {
@@ -40,4 +40,15 @@ export const PATCH: RequestHandler = async ({ params, request }) => {
 		return json({ error: 'not_found', message: `Milestone ${params.id} not found` }, { status: 404 });
 	}
 	return json(milestone);
+};
+
+export const DELETE: RequestHandler = async ({ params }) => {
+	const result = await deleteMilestone(db, params.id);
+	if (result.status === 'not_found') {
+		return json({ error: 'not_found', message: 'Milestone not found' }, { status: 404 });
+	}
+	if (result.status === 'forbidden') {
+		return json({ error: 'forbidden', message: result.message }, { status: 403 });
+	}
+	return json({ success: true, data: result.data });
 };

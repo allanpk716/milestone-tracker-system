@@ -2,6 +2,7 @@
 	import { tick } from 'svelte';
 	import { browser } from '$app/environment';
 	import { page } from '$app/state';
+	import { invalidateAll } from '$app/navigation';
 	import { toast } from '$lib/stores/toast.svelte.js';
 	import StatusBadge from '$lib/components/StatusBadge.svelte';
 	import MilestoneSlidePanel from '$lib/components/MilestoneSlidePanel.svelte';
@@ -62,6 +63,12 @@
 		selectedMilestoneId = null;
 		// Restore URL to list
 		history.pushState({}, '', '/');
+	}
+
+	async function handleMilestoneDeleted() {
+		selectedMilestoneId = null;
+		history.pushState({}, '', '/');
+		await invalidateAll();
 	}
 
 	// Handle browser back/forward
@@ -228,7 +235,7 @@
 {/if}
 
 <!-- Slide panel -->
-<MilestoneSlidePanel milestoneId={selectedMilestoneId} onclose={closePanel} />
+<MilestoneSlidePanel milestoneId={selectedMilestoneId} onclose={closePanel} ondeleted={handleMilestoneDeleted} />
 
 <style>
 	.animate-in {

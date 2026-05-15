@@ -60,7 +60,24 @@ describe('LlmClient', () => {
 			const client = new LlmClient();
 			expect((client as any).model).toBe('gpt-4o-mini');
 			expect((client as any).baseUrl).toBe('https://api.openai.com/v1');
-			expect((client as any).timeoutMs).toBe(30_000);
+			expect((client as any).timeoutMs).toBe(180_000);
+		});
+
+		it('reads LLM_TIMEOUT_MS from environment', () => {
+			process.env.LLM_TIMEOUT_MS = '60000';
+			const client = new LlmClient();
+			expect((client as any).timeoutMs).toBe(60_000);
+			delete process.env.LLM_TIMEOUT_MS;
+		});
+
+		it('falls back to default for invalid LLM_TIMEOUT_MS values', () => {
+			process.env.LLM_TIMEOUT_MS = '';
+			expect((new LlmClient() as any).timeoutMs).toBe(180_000);
+			delete process.env.LLM_TIMEOUT_MS;
+
+			process.env.LLM_TIMEOUT_MS = 'abc';
+			expect((new LlmClient() as any).timeoutMs).toBe(180_000);
+			delete process.env.LLM_TIMEOUT_MS;
 		});
 	});
 

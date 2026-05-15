@@ -3,14 +3,16 @@
 	import KanbanModuleCard from './KanbanModuleCard.svelte';
 	import TaskContextMenu from './TaskContextMenu.svelte';
 	import TaskEditModal from './TaskEditModal.svelte';
+	import ConfirmDialog from './ConfirmDialog.svelte';
 	import { toast } from '$lib/stores/toast.svelte.js';
 
 	interface Props {
 		milestoneId: string | null;
 		onclose: () => void;
+		ondeleted?: () => void;
 	}
 
-	let { milestoneId, onclose }: Props = $props();
+	let { milestoneId, onclose, ondeleted }: Props = $props();
 
 	// Panel data
 	let kanban: any = $state(null);
@@ -64,6 +66,35 @@
 	let sourcePreview = $derived(
 		kanban?.sourceMd ? kanban.sourceMd.slice(0, 300) + (kanban.sourceMd.length > 300 ? '…' : '') : null
 	);
+
+	// Delete confirmation state
+	let showDeleteConfirm = $state(false);
+	let deleting = $state(false);
+
+	// Status change confirmation state
+	let pendingStatus: string | null = $state(null);
+	let showStatusConfirm = $state(false);
+	let selectValue = $state('');
+	const statusLabelMap: Record<string, string> = {
+		'draft': '草稿',
+		'in-progress': '进行中',
+		'completed': '已完成',
+		'archived': '已归档'
+	};
+	const aiWarning = '⚠️ 该里程碑可能正在被 AI 开发，变更状态可能导致 AI 工作中断或数据丢失';
+
+	// Delete stats
+	let deleteModuleCount = $derived(kanban ? kanban.modules.length : 0);
+	let deleteTaskCount = $derived(
+		kanban ? kanban.modules.reduce((s: number, m: any) => s + (m.tasks?.length ?? 0), 0) : 0
+	);
+
+	// Sync selectValue when kanban status changes (e.g. after update)
+	$effect(() => {
+		if (kanban) {
+			selectValue = kanban.status;
+		}
+	});
 
 	// Fetch data when milestoneId changes
 	$effect(() => {
@@ -135,6 +166,45 @@
 		}
 	}
 
+	function handleStatusSelect(newStatus: string) {
+		if (!kanban || newStatus === kanban.status) return;
+		pendingStatus = newStatus;
+		showStatusConfirm = true;
+	}
+
+	async function handleStatusConfirm() {
+		if (!kanban || !pendingStatus) return;
+		const status = pendingStatus;
+		pendingStatus = null;
+		showStatusConfirm = false;
+		await updateStatus(status);
+	}
+
+	function handleStatusCancel() {
+		pendingStatus = null;
+		showStatusConfirm = false;
+		selectValue = kanban?.status ?? '';
+	}
+
+	async function handleDeleteConfirm() {
+		if (!kanban || deleting) return;
+		deleting = true;
+		try {
+			const res = await fetch(`/api/milestones/${kanban.id}`, { method: 'DELETE' });
+			if (!res.ok) {
+				const data = await res.json().catch(() => ({}));
+				throw new Error(data.message || `HTTP ${res.status}`);
+			}
+			toast.show('里程碑已删除', 'success');
+			showDeleteConfirm = false;
+			ondeleted?.();
+		} catch (err: any) {
+			toast.show(`删除失败: ${err.message}`, 'error');
+		} finally {
+			deleting = false;
+		}
+	}
+
 	function progressColor(p: number): string {
 		if (p === 100) return 'bg-green-500';
 		if (p >= 60) return 'bg-blue-500';
@@ -182,6 +252,17 @@
 						全屏查看 →
 					</a>
 				{/if}
+				{#if kanban && kanban.status !== 'in-progress'}
+					<button
+						class="p-2 rounded-lg text-red-400 hover:text-red-600 hover:bg-red-50 transition-all"
+						onclick={() => (showDeleteConfirm = true)}
+						aria-label="删除里程碑"
+					>
+						<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+							<path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+						</svg>
+					</button>
+				{/if}
 				<button
 					class="p-2 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all"
 					onclick={onclose}
@@ -219,7 +300,7 @@
 							<span>📅 {new Date(kanban.createdAt).toLocaleDateString('zh-CN')}</span>
 						</div>
 						<select class="text-xs border border-slate-200 rounded-md px-2 py-1 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
-							value={kanban.status} onchange={(e) => updateStatus(e.currentTarget.value)}>
+							value={selectValue} onchange={(e) => handleStatusSelect(e.currentTarget.value)}>
 							{#each statusUpdateOptions as opt}
 								<option value={opt}>{opt}</option>
 							{/each}
@@ -323,6 +404,34 @@
 	<!-- Global overlays for kanban card interactions -->
 	<TaskContextMenu />
 	<TaskEditModal />
+
+	<!-- Status change confirmation dialog -->
+	{#if kanban && showStatusConfirm && pendingStatus}
+		<ConfirmDialog
+			open={showStatusConfirm}
+			title="确认状态变更"
+			message="将状态从「{statusLabelMap[kanban.status] || kanban.status}」改为「{statusLabelMap[pendingStatus] || pendingStatus}」"
+			confirmText="确认变更"
+			cancelText="取消"
+			warning={kanban.status === 'in-progress' && pendingStatus !== 'in-progress' ? aiWarning : undefined}
+			onconfirm={handleStatusConfirm}
+			oncancel={handleStatusCancel}
+		/>
+	{/if}
+
+	<!-- Delete confirmation dialog -->
+	{#if kanban}
+		<ConfirmDialog
+			open={showDeleteConfirm}
+			title="删除里程碑"
+			message="将删除 {deleteModuleCount} 个模块、{deleteTaskCount} 个任务。此操作不可撤销。"
+			confirmText={deleting ? '删除中…' : '确认删除'}
+			cancelText="取消"
+			variant="danger"
+			onconfirm={handleDeleteConfirm}
+			oncancel={() => (showDeleteConfirm = false)}
+		/>
+	{/if}
 {/if}
 
 <style>

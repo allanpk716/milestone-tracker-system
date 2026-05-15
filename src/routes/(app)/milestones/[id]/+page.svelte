@@ -1,10 +1,11 @@
 <script lang="ts">
-	import { page } from '$app/state';
 	import StatusBadge from '$lib/components/StatusBadge.svelte';
 	import KanbanModuleCard from '$lib/components/KanbanModuleCard.svelte';
 	import DecomposeStream from '$lib/components/DecomposeStream.svelte';
+	import MdViewer from '$lib/components/MdViewer.svelte';
 	import TaskContextMenu from '$lib/components/TaskContextMenu.svelte';
 	import TaskEditModal from '$lib/components/TaskEditModal.svelte';
+	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import { hasPendingModules } from '$lib/stores/decompose-state.svelte.js';
 	import { toast } from '$lib/stores/toast.svelte.js';
 
@@ -67,12 +68,44 @@
 		})).filter((mod: any) => mod.tasks.length > 0);
 	});
 
-	let showFullSource = $state(false);
-	let sourcePreview = $derived(
-		kanban.sourceMd ? kanban.sourceMd.slice(0, 500) + (kanban.sourceMd.length > 500 ? '…' : '') : null
-	);
-
 	const statusUpdateOptions = ['draft', 'in-progress', 'completed', 'archived'] as const;
+
+	const statusLabelMap: Record<string, string> = {
+		'draft': '草稿',
+		'in-progress': '进行中',
+		'completed': '已完成',
+		'archived': '已归档'
+	};
+	const aiWarning = '⚠️ 该里程碑可能正在被 AI 开发，变更状态可能导致 AI 工作中断或数据丢失';
+
+	let pendingStatus: string | null = $state(null);
+	let showStatusConfirm = $state(false);
+	let selectValue = $state(kanban.status);
+
+	// Sync selectValue when kanban status changes
+	$effect(() => {
+		selectValue = kanban.status;
+	});
+
+	function handleStatusSelect(newStatus: string) {
+		if (newStatus === kanban.status) return;
+		pendingStatus = newStatus;
+		showStatusConfirm = true;
+	}
+
+	async function handleStatusConfirm() {
+		if (!pendingStatus) return;
+		const status = pendingStatus;
+		pendingStatus = null;
+		showStatusConfirm = false;
+		await updateStatus(status);
+	}
+
+	function handleStatusCancel() {
+		pendingStatus = null;
+		showStatusConfirm = false;
+		selectValue = kanban.status;
+	}
 
 	async function updateStatus(newStatus: string) {
 		try {
@@ -127,7 +160,7 @@
 			</div>
 		</div>
 		<select class="text-sm border border-slate-200 rounded-lg px-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-300 transition-all"
-			value={kanban.status} onchange={(e) => updateStatus(e.currentTarget.value)}>
+			value={selectValue} onchange={(e) => handleStatusSelect(e.currentTarget.value)}>
 			{#each statusUpdateOptions as opt}
 				<option value={opt}>{opt}</option>
 			{/each}
@@ -203,71 +236,86 @@
 {/if}
 
 {#if activeTab === 'detail'}
-	<DecomposeStream milestoneId={kanban.id} sourceMd={kanban.sourceMd} status={kanban.status} />
+<div class="flex flex-col lg:flex-row gap-5 items-start">
+	<!-- Left column: MdViewer + module overview -->
+	<div class="w-full lg:w-[60%] min-w-0 space-y-5">
+		{#if kanban.sourceMd}
+		<div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+			<div class="h-[70vh]">
+				<MdViewer sourceMd={kanban.sourceMd} />
+			</div>
+		</div>
+		{:else}
+		<div class="bg-white rounded-2xl border border-slate-200/80 p-8 shadow-sm text-center">
+			<div class="text-3xl mb-3">📄</div>
+			<p class="text-sm text-slate-400">暂无来源文档</p>
+		</div>
+		{/if}
 
-	{#if kanban.status === 'draft' && hasPendingModules(kanban.id)}
-	<div class="mb-5">
-		<a href="/milestones/{kanban.id}/preview"
-		   class="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-xl
-			border border-indigo-200 text-indigo-700 bg-indigo-50/50 hover:bg-indigo-50
-			transition-all duration-200">
-			<span>📋</span>继续编辑分解结果
-		</a>
+		{#if kanban.modules.length > 0}
+		<div class="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm">
+			<h2 class="text-sm font-semibold text-slate-700 mb-4">📦 模块概览 ({kanban.modules.length})</h2>
+			<div class="space-y-3">
+				{#each kanban.modules as module (module.id)}
+					<div class="flex items-center gap-3 py-2 px-3 rounded-lg hover:bg-slate-50 transition-colors">
+						<StatusBadge status={module.status} size="sm" />
+						<span class="text-sm text-slate-700 font-medium flex-1 truncate">{module.name}</span>
+						{#if module.totalTasks > 0}
+							<div class="flex items-center gap-2 flex-shrink-0">
+								<div class="w-20 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+									<div class="h-full rounded-full transition-all {progressColor(module.progressPercent || 0)}"
+										style="width: {module.progressPercent || 0}%"></div>
+								</div>
+								<span class="text-xs text-slate-400 tabular-nums w-12 text-right">{module.doneTasks}/{module.totalTasks}</span>
+							</div>
+						{:else}
+							<span class="text-xs text-slate-300">无任务</span>
+						{/if}
+					</div>
+				{/each}
+			</div>
+		</div>
+		{:else}
+		<div class="bg-white rounded-2xl border border-slate-200/80 p-8 text-center shadow-sm">
+			<div class="text-3xl mb-3">📦</div>
+			<p class="text-sm text-slate-500">暂无模块</p>
+			<p class="text-xs text-slate-400 mt-1">后续可通过分解功能添加模块和任务</p>
+		</div>
+		{/if}
 	</div>
-	{/if}
 
-	{#if sourcePreview}
-	<div class="bg-white rounded-2xl border border-slate-200/80 p-6 mb-5 shadow-sm">
-		<div class="flex items-center justify-between mb-3">
-			<h2 class="text-sm font-semibold text-slate-700">📄 来源文档</h2>
-			{#if kanban.sourceMd && kanban.sourceMd.length > 500}
-				<button class="text-xs text-indigo-500 hover:text-indigo-600 transition-colors"
-					onclick={() => (showFullSource = !showFullSource)}>
-					{showFullSource ? '收起' : '展开全文'}
-				</button>
+	<!-- Right column: AI decompose area -->
+	<div class="w-full lg:w-[40%] min-w-0">
+		<div class="lg:sticky lg:top-5">
+			<DecomposeStream milestoneId={kanban.id} sourceMd={kanban.sourceMd} status={kanban.status} />
+
+			{#if kanban.status === 'draft' && hasPendingModules(kanban.id)}
+			<div class="mt-4">
+				<a href="/milestones/{kanban.id}/preview"
+				   class="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-xl
+					border border-indigo-200 text-indigo-700 bg-indigo-50/50 hover:bg-indigo-50
+					transition-all duration-200">
+					<span>📋</span>继续编辑分解结果
+				</a>
+			</div>
 			{/if}
 		</div>
-		<pre class="text-sm text-slate-500 whitespace-pre-wrap break-words font-mono leading-relaxed max-h-64 overflow-y-auto">
-			{showFullSource ? kanban.sourceMd : sourcePreview}
-		</pre>
 	</div>
-	{:else}
-	<div class="bg-white rounded-2xl border border-slate-200/80 p-6 mb-5 shadow-sm text-center">
-		<p class="text-sm text-slate-400">暂无来源文档</p>
-	</div>
-	{/if}
-
-	{#if kanban.modules.length > 0}
-	<div class="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm">
-		<h2 class="text-sm font-semibold text-slate-700 mb-4">📦 模块概览 ({kanban.modules.length})</h2>
-		<div class="space-y-3">
-			{#each kanban.modules as module (module.id)}
-				<div class="flex items-center gap-3 py-2 px-3 rounded-lg hover:bg-slate-50 transition-colors">
-					<StatusBadge status={module.status} size="sm" />
-					<span class="text-sm text-slate-700 font-medium flex-1 truncate">{module.name}</span>
-					{#if module.totalTasks > 0}
-						<div class="flex items-center gap-2 flex-shrink-0">
-							<div class="w-20 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-								<div class="h-full rounded-full transition-all {progressColor(module.progressPercent || 0)}"
-									style="width: {module.progressPercent || 0}%"></div>
-							</div>
-							<span class="text-xs text-slate-400 tabular-nums w-12 text-right">{module.doneTasks}/{module.totalTasks}</span>
-						</div>
-					{:else}
-						<span class="text-xs text-slate-300">无任务</span>
-					{/if}
-				</div>
-			{/each}
-		</div>
-	</div>
-	{:else}
-	<div class="bg-white rounded-2xl border border-slate-200/80 p-8 text-center shadow-sm">
-		<div class="text-3xl mb-3">📦</div>
-		<p class="text-sm text-slate-500">暂无模块</p>
-		<p class="text-xs text-slate-400 mt-1">后续可通过分解功能添加模块和任务</p>
-	</div>
-	{/if}
+</div>
 {/if}
 
 <TaskContextMenu />
 <TaskEditModal />
+
+{#if showStatusConfirm && pendingStatus}
+	<ConfirmDialog
+		open={showStatusConfirm}
+		title="确认状态变更"
+		message="将状态从「{statusLabelMap[kanban.status] || kanban.status}」改为「{statusLabelMap[pendingStatus] || pendingStatus}」"
+		confirmText="确认变更"
+		cancelText="取消"
+		warning={kanban.status === 'in-progress' && pendingStatus !== 'in-progress' ? aiWarning : undefined}
+		onconfirm={handleStatusConfirm}
+		oncancel={handleStatusCancel}
+	/>
+{/if}

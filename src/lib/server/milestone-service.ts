@@ -164,4 +164,34 @@ function formatTaskResponse(row: any) {
 	};
 }
 
+// ── Delete ───────────────────────────────────────────────────────────────────
+
+export type DeleteMilestoneResult =
+	| { status: 'deleted'; data: ReturnType<typeof formatMilestoneResponse> }
+	| { status: 'not_found' }
+	| { status: 'forbidden'; message: string };
+
+export async function deleteMilestone(
+	db: BetterSQLite3Database<any>,
+	id: string
+): Promise<DeleteMilestoneResult> {
+	const milestone = await db
+		.select()
+		.from(milestones)
+		.where(eq(milestones.id, id))
+		.get();
+
+	if (!milestone) {
+		return { status: 'not_found' };
+	}
+
+	if (milestone.status === 'in-progress') {
+		return { status: 'forbidden', message: '该里程碑正在开发中，无法删除' };
+	}
+
+	await db.delete(milestones).where(eq(milestones.id, id));
+
+	return { status: 'deleted', data: formatMilestoneResponse(milestone) };
+}
+
 export { formatModuleResponse, formatTaskResponse };
