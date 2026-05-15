@@ -1,5 +1,5 @@
 {
-  "compiledAt": "2026-05-15T12:54:46.134Z",
+  "compiledAt": "2026-05-15T14:15:53.246Z",
   "milestoneId": "M005",
   "pipeline": {
     "clarifyRoundLimit": 3,
@@ -13,12 +13,15 @@
       "id": "execute-task:M005:S01:T01",
       "kind": "unit",
       "dependsOn": [],
-      "writes": [],
+      "writes": [
+        "src/lib/server/milestone-service.ts",
+        "src/lib/server/milestone-service.test.ts"
+      ],
       "metadata": {
         "unitType": "execute-task",
         "unitId": "M005.S01.T01",
-        "title": "Add deleteMilestone service method with status guard + unit tests",
-        "status": "pending"
+        "title": "Added deleteMilestone service function with status protection (forbidden for in-progress) and cascade deletion support",
+        "status": "complete"
       }
     },
     {
@@ -27,12 +30,14 @@
       "dependsOn": [
         "execute-task:M005:S01:T01"
       ],
-      "writes": [],
+      "writes": [
+        "src/routes/api/milestones/[id]/+server.ts"
+      ],
       "metadata": {
         "unitType": "execute-task",
         "unitId": "M005.S01.T02",
-        "title": "Wire DELETE handler in +server.ts route",
-        "status": "pending"
+        "title": "Added DELETE handler to milestone API route with status-based error responses (404 not_found, 403 forbidden, 200 deleted)",
+        "status": "complete"
       }
     },
     {
@@ -44,7 +49,107 @@
       "metadata": {
         "unitType": "complete-slice",
         "unitId": "M005.S01",
-        "title": "删除 API + Service",
+        "title": "S01",
+        "status": "complete"
+      }
+    },
+    {
+      "id": "execute-task:M005:S02:T01",
+      "kind": "unit",
+      "dependsOn": [],
+      "writes": [
+        "src/lib/components/ConfirmDialog.svelte"
+      ],
+      "metadata": {
+        "unitType": "execute-task",
+        "unitId": "M005.S02.T01",
+        "title": "Created ConfirmDialog.svelte shared confirmation component with danger variant and warning support",
+        "status": "complete"
+      }
+    },
+    {
+      "id": "execute-task:M005:S02:T02",
+      "kind": "unit",
+      "dependsOn": [
+        "execute-task:M005:S02:T01"
+      ],
+      "writes": [
+        "src/lib/components/MilestoneSlidePanel.svelte",
+        "src/routes/(app)/+page.svelte"
+      ],
+      "metadata": {
+        "unitType": "execute-task",
+        "unitId": "M005.S02.T02",
+        "title": "Added delete button with confirmation dialog (showing module/task stats) to MilestoneSlidePanel, wired DELETE API and list refresh",
+        "status": "complete"
+      }
+    },
+    {
+      "id": "execute-task:M005:S02:T03",
+      "kind": "unit",
+      "dependsOn": [
+        "execute-task:M005:S02:T02"
+      ],
+      "writes": [
+        "src/lib/components/MilestoneSlidePanel.svelte",
+        "src/routes/(app)/milestones/[id]/+page.svelte"
+      ],
+      "metadata": {
+        "unitType": "execute-task",
+        "unitId": "M005.S02.T03",
+        "title": "Added two-step status change confirmation with AI warning to MilestoneSlidePanel and detail page",
+        "status": "complete"
+      }
+    },
+    {
+      "id": "complete-slice:M005:S02",
+      "kind": "verification",
+      "dependsOn": [
+        "execute-task:M005:S02:T03"
+      ],
+      "metadata": {
+        "unitType": "complete-slice",
+        "unitId": "M005.S02",
+        "title": "S02",
+        "status": "complete"
+      }
+    },
+    {
+      "id": "execute-task:M005:S03:T01",
+      "kind": "unit",
+      "dependsOn": [],
+      "writes": [],
+      "metadata": {
+        "unitType": "execute-task",
+        "unitId": "M005.S03.T01",
+        "title": "Configurable LLM_TIMEOUT_MS in LlmClient",
+        "status": "pending"
+      }
+    },
+    {
+      "id": "execute-task:M005:S03:T02",
+      "kind": "unit",
+      "dependsOn": [
+        "execute-task:M005:S03:T01"
+      ],
+      "writes": [],
+      "metadata": {
+        "unitType": "execute-task",
+        "unitId": "M005.S03.T02",
+        "title": "Enhance decompose cancel button and stream animation",
+        "status": "pending"
+      }
+    },
+    {
+      "id": "complete-slice:M005:S03",
+      "kind": "verification",
+      "dependsOn": [
+        "execute-task:M005:S03:T02"
+      ],
+      "metadata": {
+        "unitType": "complete-slice",
+        "unitId": "M005.S03",
+        "title": "LLM 超时配置 + 拆解增强",
         "status": "pending"
       }
     }

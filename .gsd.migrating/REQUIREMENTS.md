@@ -4,6 +4,15 @@ This file is the explicit capability and coverage contract for the project.
 
 ## Active
 
+### R001 — 部署脚本（deploy.bat）实现本地构建 → SCP 全量推送 build/ + node_modules/ → NSSM 重启 MilestoneTracker 服务 → 健康检查验证。远程服务：Windows Server 2019，SSH update-hub 别名，端口 30002，路径 C:\WorkSpace\milestone-tracker，服务名 MilestoneTracker，NSSM 管理自启动 + 崩溃重启 + 日志轮转
+- Class: core-capability
+- Status: active
+- Description: 部署脚本（deploy.bat）实现本地构建 → SCP 全量推送 build/ + node_modules/ → NSSM 重启 MilestoneTracker 服务 → 健康检查验证。远程服务：Windows Server 2019，SSH update-hub 别名，端口 30002，路径 C:\WorkSpace\milestone-tracker，服务名 MilestoneTracker，NSSM 管理自启动 + 崩溃重启 + 日志轮转
+- Why it matters: 项目需要从本地开发走向可部署运行，需要可重复的部署流程替代手动操作
+- Source: user
+- Primary owning slice: M002/S02
+- Notes: Validated in M004/S01: deploy.bat end-to-end deployment to Windows Server 2019 successful — build→SCP→NSSM restart→health check OK. Fixed NSSM path bug (bare 'nssm' not on PATH), SCP port bug (SSH config controls port), and mkdir -p Windows incompatibility.
+
 ### R004 — 部署后对真实服务执行 E2E 验证（Vitest + node-fetch），覆盖健康检查、登录、API 认证、核心业务流（创建里程碑 → 拆解 → 确认 → 激活）
 - Class: quality-attribute
 - Status: active
@@ -11,6 +20,15 @@ This file is the explicit capability and coverage contract for the project.
 - Why it matters: 确保部署后的服务真正可用，自动化验证替代手动检查
 - Source: user
 - Primary owning slice: M002/S03
+
+### R005 — git 提交中无密码/key/密钥。配置文件用 .example 模板 + .gitignore 排除真实配置。部署脚本从本地配置文件读取敏感信息。确保 data/、logs/、.env、deploy-config.bat 均被 gitignore
+- Class: compliance/security
+- Status: active
+- Description: git 提交中无密码/key/密钥。配置文件用 .example 模板 + .gitignore 排除真实配置。部署脚本从本地配置文件读取敏感信息。确保 data/、logs/、.env、deploy-config.bat 均被 gitignore
+- Why it matters: 防止隐私泄露，项目可能在公开仓库中共享
+- Source: user
+- Primary owning slice: M002/S02
+- Notes: Validated in M004/S01: verify-no-secrets.sh 0 false positives across 149 files. .gsd.migrating/ untracked from git. Git history audit shows no real secrets. .gitignore covers data/, logs/, .env, deploy-config.bat.
 
 ### R006 — 创建 GSD 技能文件让 /release 斜杠命令触发构建 + 部署流程：验证 git 工作区干净 → 执行部署脚本 → 验证健康检查 → 报告结果
 - Class: operability
@@ -27,33 +45,6 @@ This file is the explicit capability and coverage contract for the project.
 - Why it matters: 文档是项目可用性的关键部分，README 精简保持可读性，独立文档保证完整性
 - Source: user
 - Primary owning slice: M002/S04
-
-### R001 — 部署脚本（deploy.bat）实现本地构建 → SCP 全量推送 build/ + node_modules/ → NSSM 重启 MilestoneTracker 服务 → 健康检查验证。远程服务：Windows Server 2019，SSH update-hub 别名，端口 30002，路径 C:\WorkSpace\milestone-tracker，服务名 MilestoneTracker，NSSM 管理自启动 + 崩溃重启 + 日志轮转
-- Class: core-capability
-- Status: active
-- Description: 部署脚本（deploy.bat）实现本地构建 → SCP 全量推送 build/ + node_modules/ → NSSM 重启 MilestoneTracker 服务 → 健康检查验证。远程服务：Windows Server 2019，SSH update-hub 别名，端口 30002，路径 C:\WorkSpace\milestone-tracker，服务名 MilestoneTracker，NSSM 管理自启动 + 崩溃重启 + 日志轮转
-- Why it matters: 项目需要从本地开发走向可部署运行，需要可重复的部署流程替代手动操作
-- Source: user
-- Primary owning slice: M002/S02
-- Notes: Validated in M004/S01: deploy.bat end-to-end deployment to Windows Server 2019 successful — build→SCP→NSSM restart→health check OK. Fixed NSSM path bug (bare 'nssm' not on PATH), SCP port bug (SSH config controls port), and mkdir -p Windows incompatibility.
-
-### R005 — git 提交中无密码/key/密钥。配置文件用 .example 模板 + .gitignore 排除真实配置。部署脚本从本地配置文件读取敏感信息。确保 data/、logs/、.env、deploy-config.bat 均被 gitignore
-- Class: compliance/security
-- Status: active
-- Description: git 提交中无密码/key/密钥。配置文件用 .example 模板 + .gitignore 排除真实配置。部署脚本从本地配置文件读取敏感信息。确保 data/、logs/、.env、deploy-config.bat 均被 gitignore
-- Why it matters: 防止隐私泄露，项目可能在公开仓库中共享
-- Source: user
-- Primary owning slice: M002/S02
-- Notes: Validated in M004/S01: verify-no-secrets.sh 0 false positives across 149 files. .gsd.migrating/ untracked from git. Git history audit shows no real secrets. .gitignore covers data/, logs/, .env, deploy-config.bat.
-
-### R010 — DELETE /api/milestones/[id] 端点。仅允许状态为 draft、completed、archived 的里程碑删除。in-progress 状态返回 403 + 明确错误信息"该里程碑正在开发中，无法删除"。删除时级联删除所有关联模块和任务（依赖 DB schema 已有的 onDelete: cascade）。
-- Class: core-capability
-- Status: active
-- Description: DELETE /api/milestones/[id] 端点。仅允许状态为 draft、completed、archived 的里程碑删除。in-progress 状态返回 403 + 明确错误信息"该里程碑正在开发中，无法删除"。删除时级联删除所有关联模块和任务（依赖 DB schema 已有的 onDelete: cascade）。
-- Why it matters: 缺少删除功能，用户无法清理不需要的里程碑。状态限制防止误删正在被 AI 开发中的里程碑。
-- Source: user
-- Primary owning slice: M005/S01
-- Validation: mapped
 
 ### R011 — 侧滑面板增加删除按钮。点击弹出确认弹窗，显示"将删除 X 个模块、Y 个任务"统计信息。仅当状态允许删除时显示按钮。确认后执行删除，关闭面板 + 刷新列表 + toast 提示。
 - Class: primary-user-loop
@@ -125,6 +116,15 @@ This file is the explicit capability and coverage contract for the project.
 - Status: validated
 - Validation: validated by S02: 74 automated tests covering block/unblock API endpoints, CLI commands, status guards, error paths (404/409/400), and --json output
 
+### R010 — DELETE /api/milestones/[id] 端点。仅允许状态为 draft、completed、archived 的里程碑删除。in-progress 状态返回 403 + 明确错误信息"该里程碑正在开发中，无法删除"。删除时级联删除所有关联模块和任务（依赖 DB schema 已有的 onDelete: cascade）。
+- Class: core-capability
+- Status: validated
+- Description: DELETE /api/milestones/[id] 端点。仅允许状态为 draft、completed、archived 的里程碑删除。in-progress 状态返回 403 + 明确错误信息"该里程碑正在开发中，无法删除"。删除时级联删除所有关联模块和任务（依赖 DB schema 已有的 onDelete: cascade）。
+- Why it matters: 缺少删除功能，用户无法清理不需要的里程碑。状态限制防止误删正在被 AI 开发中的里程碑。
+- Source: user
+- Primary owning slice: M005/S01
+- Validation: DELETE /api/milestones/[id] implemented with status protection (403 for in-progress) and cascade deletion of modules/tasks for draft/completed/archived — verified by 6 unit tests and clean build in S01
+
 ## Deferred
 
 ## Out of Scope
@@ -133,15 +133,15 @@ This file is the explicit capability and coverage contract for the project.
 
 | ID | Class | Status | Primary owner | Supporting | Proof |
 |---|---|---|---|---|---|
-| R004 | quality-attribute | active | M002/S03 | none | unmapped |
-| R006 | operability | active | M002/S03 | none | unmapped |
-| R007 | operability | active | M002/S04 | none | unmapped |
+| R001 | core-capability | active | M002/S02 | none | unmapped |
 | R002 | quality-attribute | validated | M002/S01 | none | Logger module created with 20 passing unit tests; all 9 server-side console.info/warn replaced with createLogger(); zero external dependencies; full test suite 363/363 green |
 | R003 | operability | validated | M002/S01 | none | GET /api/health endpoint created with 7 passing tests; returns status/version/uptime/db; no auth required; DI-based healthCheck function for testability |
-| R009 |  | validated | none | none | validated by S02: 74 automated tests covering block/unblock API endpoints, CLI commands, status guards, error paths (404/409/400), and --json output |
-| R001 | core-capability | active | M002/S02 | none | unmapped |
+| R004 | quality-attribute | active | M002/S03 | none | unmapped |
 | R005 | compliance/security | active | M002/S02 | none | unmapped |
-| R010 | core-capability | active | M005/S01 | none | mapped |
+| R006 | operability | active | M002/S03 | none | unmapped |
+| R007 | operability | active | M002/S04 | none | unmapped |
+| R009 |  | validated | none | none | validated by S02: 74 automated tests covering block/unblock API endpoints, CLI commands, status guards, error paths (404/409/400), and --json output |
+| R010 | core-capability | validated | M005/S01 | none | DELETE /api/milestones/[id] implemented with status protection (403 for in-progress) and cascade deletion of modules/tasks for draft/completed/archived — verified by 6 unit tests and clean build in S01 |
 | R011 | primary-user-loop | active | M005/S02 | M005/S01 | mapped |
 | R012 | primary-user-loop | active | M005/S02 | none | mapped |
 | R013 | continuity | active | M005/S03 | none | mapped |
@@ -150,7 +150,7 @@ This file is the explicit capability and coverage contract for the project.
 
 ## Coverage Summary
 
-- Active requirements: 11
-- Mapped to slices: 11
-- Validated: 3 (R002, R003, R009)
+- Active requirements: 10
+- Mapped to slices: 10
+- Validated: 4 (R002, R003, R009, R010)
 - Unmapped active requirements: 0

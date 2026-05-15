@@ -1,9 +1,9 @@
 # GSD State
 
 **Active Milestone:** M005: 里程碑删除 + 状态确认 + LLM 超时 + 详情页重构
-**Active Slice:** S01: 删除 API + Service
+**Active Slice:** S03: LLM 超时配置 + 拆解增强
 **Phase:** executing
-**Requirements Status:** 11 active · 3 validated · 0 deferred · 0 out of scope
+**Requirements Status:** 10 active · 4 validated · 0 deferred · 0 out of scope
 
 ## Milestone Registry
 - ✅ **M001:** MVP 核心功能
@@ -19,4 +19,4 @@
 - None
 
 ## Next Action
-Execute T01: Add deleteMilestone service function with status validation and cascade deletion in slice S01.
+Execute T01: LlmClient 读取 LLM_TIMEOUT_MS 环境变量，默认 180s in slice S03.

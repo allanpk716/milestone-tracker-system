@@ -1,7 +1,7 @@
 # Codebase Map
 
-Generated: 2026-05-15T12:55:26Z | Files: 200 | Described: 0/200
-<!-- gsd:codebase-meta {"generatedAt":"2026-05-15T12:55:26Z","fingerprint":"14c80d54470548fbbd6f6139fbe58f41277ef5b6","fileCount":200,"truncated":false} -->
+Generated: 2026-05-15T14:16:11Z | Files: 195 | Described: 0/195
+<!-- gsd:codebase-meta {"generatedAt":"2026-05-15T14:16:11Z","fingerprint":"f2277ab37311d0d8d80a60a687cb63a32f84aafe","fileCount":195,"truncated":false} -->
 
 ### (root)/
 - `.env.example`
@@ -23,7 +23,6 @@ Generated: 2026-05-15T12:55:26Z | Files: 200 | Described: 0/200
 
 ### .gsd.migrating/
 - `.gsd.migrating/CODEBASE.md`
-- `.gsd.migrating/DECISIONS.md`
 - `.gsd.migrating/doctor-history.jsonl`
 - `.gsd.migrating/event-log.jsonl`
 - `.gsd.migrating/gsd.db`
@@ -53,12 +52,6 @@ Generated: 2026-05-15T12:55:26Z | Files: 200 | Described: 0/200
 ### .gsd.migrating/runtime/
 - `.gsd.migrating/runtime/uok-parity.jsonl`
 - `.gsd.migrating/runtime/uok-plan-v2-graph.json`
-
-### .gsd.migrating/runtime/units/
-- `.gsd.migrating/runtime/units/complete-slice-M003-S05.json`
-- `.gsd.migrating/runtime/units/execute-task-M003-S05-T01.json`
-- `.gsd.migrating/runtime/units/execute-task-M003-S05-T02.json`
-- `.gsd.migrating/runtime/units/execute-task-M003-S05-T03.json`
 
 ### .playwright-cli/
 - `.playwright-cli/page-2026-05-14T16-05-58-180Z.yml`
