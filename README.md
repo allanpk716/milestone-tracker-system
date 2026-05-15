@@ -20,6 +20,9 @@
 | [架构文档](docs/architecture.md) | 系统架构、认证机制、数据库设计、LLM 集成、前端组件和 CLI 架构 |
 | [开发注意事项](docs/development-notes.md) | 数据库事务、认证、SvelteKit 配置、LLM 集成等踩坑记录 |
 | [部署指南](docs/deployment.md) | Windows 服务器部署、NSSM 服务管理、日志与监控、E2E 测试 |
+| [AI Agent 集成指南](docs/agent-integration-guide.md) | 将 Claude Code / Codex / Cursor 等 AI Agent 接入 Milestone Tracker |
+| [mt-cli 命令参考](packages/cli/README.md) | CLI 安装、配置、命令参考、JSON 输出格式 |
+| [mt-cli GSD 扩展](docs/mt-cli-extension.md) | GSD-2 auto-mode 集成（自动 claim/complete） |
 | [系统定义文档](docs/设计输入、需求文档/milestone-tracker-system-spec-2026-05-12.md) | 原始需求和设计规格说明 |
 
 ## 快速开始
