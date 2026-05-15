@@ -1,6 +1,10 @@
 <script lang="ts">
+	import { tick } from 'svelte';
+	import { browser } from '$app/environment';
+	import { page } from '$app/state';
 	import { toast } from '$lib/stores/toast.svelte.js';
 	import StatusBadge from '$lib/components/StatusBadge.svelte';
+	import MilestoneSlidePanel from '$lib/components/MilestoneSlidePanel.svelte';
 
 	interface Milestone {
 		id: string;
@@ -30,6 +34,47 @@
 	let loading = $state(false);
 	let error = $state('');
 	let activeFilter = $state<string | null>(null);
+
+	// Slide panel state
+	let selectedMilestoneId = $state<string | null>(null);
+
+
+
+	// Open panel when landing on /milestones/[id] from a direct URL
+	$effect(() => {
+		const path = page.url.pathname;
+		const match = path.match(/^\/milestones\/([^/]+)$/);
+		if (match) {
+			selectedMilestoneId = match[1];
+		}
+	});
+
+	function openPanel(milestoneId: string, e?: MouseEvent) {
+		if (e) {
+			if (e.button !== 0 || e.ctrlKey || e.metaKey) return;
+			e.preventDefault();
+		}
+		selectedMilestoneId = milestoneId;
+		history.pushState({}, '', `/milestones/${milestoneId}`);
+	}
+
+	function closePanel() {
+		selectedMilestoneId = null;
+		// Restore URL to list
+		history.pushState({}, '', '/');
+	}
+
+	// Handle browser back/forward
+	$effect(() => {
+		if (!browser) return;
+		const handler = () => {
+			const path = window.location.pathname;
+			const match = path.match(/^\/milestones\/([^/]+)$/);
+			selectedMilestoneId = match ? match[1] : null;
+		};
+		window.addEventListener('popstate', handler);
+		return () => window.removeEventListener('popstate', handler);
+	});
 
 	let statusGroups = $derived.by(() => {
 		const defs: Record<string, { label: string; color: string; dot: string }> = {
@@ -61,28 +106,12 @@
 	function toggleFilter(status: string) {
 		activeFilter = activeFilter === status ? null : status;
 	}
-
-	async function loadMilestones() {
-		loading = true;
-		error = '';
-		try {
-			const res = await fetch('/api/milestones');
-			if (!res.ok) throw new Error(`HTTP ${res.status}`);
-			milestones = await res.json();
-		} catch (e: any) {
-			error = '加载里程碑列表失败';
-			toast.show(error, 'error');
-		} finally {
-			loading = false;
-		}
-	}
 </script>
 
 <svelte:head>
 	<title>里程碑列表 — 里程碑管理系统</title>
 </svelte:head>
 
-<!-- Page header -->
 <div class="flex items-end justify-between mb-8">
 	<div>
 		<h1 class="text-2xl font-bold text-slate-900 tracking-tight">里程碑</h1>
@@ -112,31 +141,17 @@
 	</div>
 {/if}
 
-{#if loading}
-	<div class="flex items-center justify-center py-24">
-		<div class="flex items-center gap-2 text-slate-400 text-sm">
-			<svg class="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
-				<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3"/>
-				<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/>
-			</svg>
-			加载中…
-		</div>
-	</div>
-{:else if milestones.length === 0}
+{#if milestones.length === 0}
 	<div class="flex flex-col items-center justify-center py-28 text-center">
 		<div class="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mb-5">
 			<span class="text-3xl">📋</span>
 		</div>
 		<h2 class="text-lg font-semibold text-slate-700 mb-1">暂无里程碑</h2>
 		<p class="text-sm text-slate-400 mb-6">创建第一个里程碑开始追踪进度</p>
-		<a
-			href="/milestones/create"
+		<a href="/milestones/create"
 			class="inline-flex items-center gap-1.5 px-5 py-2.5 bg-indigo-600 text-white text-sm font-medium rounded-xl
-			       shadow-sm shadow-indigo-200 hover:bg-indigo-700 hover:shadow-md hover:shadow-indigo-200
-			       active:scale-[0.97] transition-all duration-200"
-		>
-			<span class="text-sm leading-none">+</span>
-			新建里程碑
+			       shadow-sm shadow-indigo-200 hover:bg-indigo-700 active:scale-[0.97] transition-all duration-200">
+			<span class="text-sm leading-none">+</span>新建里程碑
 		</a>
 	</div>
 {:else}
@@ -144,22 +159,16 @@
 	<div class="flex items-center gap-2 mb-6 flex-wrap">
 		<button
 			class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200
-			       {!activeFilter
-						? 'bg-slate-800 text-white ring-1 ring-slate-800 shadow-sm'
-						: 'bg-white text-slate-500 ring-1 ring-slate-200 hover:bg-slate-50 hover:ring-slate-300'}"
-			onclick={() => (activeFilter = null)}
-		>
+			       {!activeFilter ? 'bg-slate-800 text-white ring-1 ring-slate-800 shadow-sm' : 'bg-white text-slate-500 ring-1 ring-slate-200 hover:bg-slate-50 hover:ring-slate-300'}"
+			onclick={() => (activeFilter = null)}>
 			全部
 			<span class="tabular-nums {activeFilter ? 'text-slate-400' : 'text-slate-300'}">{milestones.length}</span>
 		</button>
 		{#each statusGroups as group}
 			<button
 				class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200
-				       {activeFilter === group.status
-							? 'ring-2 shadow-sm ' + group.color + ' ring-current'
-							: group.color + ' ring-1 hover:shadow-sm'}"
-				onclick={() => toggleFilter(group.status)}
-			>
+				       {activeFilter === group.status ? 'ring-2 shadow-sm ' + group.color + ' ring-current' : group.color + ' ring-1 hover:shadow-sm'}"
+				onclick={() => toggleFilter(group.status)}>
 				<span class="w-1.5 h-1.5 rounded-full {group.dot}"></span>
 				{group.label}
 				<span class="tabular-nums font-semibold">{group.count}</span>
@@ -170,20 +179,16 @@
 	<!-- Milestone grid -->
 	<div class="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
 		{#each filteredMilestones as milestone, i (milestone.id)}
-			<div
-				class="animate-in"
-				style="--delay: {Math.min(i * 60, 400)}ms"
-			>
+			<div class="animate-in" style="--delay: {Math.min(i * 60, 400)}ms">
 				<a
 					href="/milestones/{milestone.id}"
 					class="group relative block bg-white rounded-2xl border border-slate-200/80 overflow-hidden
 					       hover:shadow-lg hover:shadow-slate-200/50 hover:border-slate-300/80
 					       active:scale-[0.98] transition-all duration-200"
+					onclick={(e) => openPanel(milestone.id, e)}
 				>
-					<!-- Status accent bar -->
 					<div class="absolute left-0 top-0 bottom-0 w-[3px] {statusColors[milestone.status] || 'bg-slate-400'} rounded-l-2xl
 					            opacity-60 group-hover:opacity-100 transition-opacity duration-200"></div>
-
 					<div class="p-5 pl-6">
 						<div class="flex items-start justify-between gap-3">
 							<div class="min-w-0 flex-1">
@@ -194,7 +199,6 @@
 							</div>
 							<StatusBadge status={milestone.status} />
 						</div>
-
 						<div class="mt-3.5 flex items-center gap-4 text-xs text-slate-400">
 							<span class="inline-flex items-center gap-1">
 								<svg class="w-3.5 h-3.5 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
@@ -211,7 +215,6 @@
 								</span>
 							{/if}
 						</div>
-
 						{#if milestone.sourceMd}
 							<p class="mt-3 text-xs text-slate-400 leading-relaxed line-clamp-2">
 								{milestone.sourceMd.slice(0, 120)}
@@ -222,21 +225,10 @@
 			</div>
 		{/each}
 	</div>
-
-	{#if filteredMilestones.length === 0 && activeFilter}
-		<div class="flex flex-col items-center justify-center py-16 text-center">
-			<p class="text-sm text-slate-400">
-				没有「{statusGroups.find(g => g.status === activeFilter)?.label}」状态的里程碑
-			</p>
-			<button
-				class="mt-2 text-xs text-indigo-600 hover:text-indigo-700 underline underline-offset-2"
-				onclick={() => (activeFilter = null)}
-			>
-				显示全部
-			</button>
-		</div>
-	{/if}
 {/if}
+
+<!-- Slide panel -->
+<MilestoneSlidePanel milestoneId={selectedMilestoneId} onclose={closePanel} />
 
 <style>
 	.animate-in {
