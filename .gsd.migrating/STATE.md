@@ -19,4 +19,4 @@
 - None
 
 ## Next Action
-Execute T01: Add deleteMilestone service method with status guard + unit tests in slice S01.
+Execute T01: Add deleteMilestone service function with status validation and cascade deletion in slice S01.

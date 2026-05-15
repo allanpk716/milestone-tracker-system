@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "exported_at": "2026-05-15T09:51:17.198Z",
+  "exported_at": "2026-05-15T12:56:09.545Z",
   "milestones": [
     {
       "id": "M001",
@@ -783,11 +783,11 @@
       "completed_at": null,
       "full_summary_md": "",
       "full_uat_md": "",
-      "goal": "实现里程碑删除的后端能力：API 端点 + service 方法 + 状态保护 + 级联删除",
-      "success_criteria": "DELETE /api/milestones/[id] 对 draft/completed/archived 返回 200；对 in-progress 返回 403 + 错误信息；对不存在 ID 返回 404；级联删除验证（模块和任务全部清除）",
-      "proof_level": "contract + integration",
-      "integration_closure": "API 可被前端直接调用",
-      "observability_impact": "logger 记录删除操作",
+      "goal": "Implement DELETE /api/milestones/[id] endpoint with status protection (reject in-progress with 403) and cascade deletion (draft/completed/archived milestones deleted along with all associated modules and tasks).",
+      "success_criteria": "",
+      "proof_level": "",
+      "integration_closure": "",
+      "observability_impact": "",
       "sequence": 1,
       "replan_triggered_at": null,
       "is_sketch": 0,
@@ -4189,6 +4189,86 @@
         "scripts/verify-remote.sh"
       ],
       "observability_impact": "Script reports per-command pass/fail with exit code, stdout snippet, and structured summary at the end.",
+      "full_plan_md": "",
+      "sequence": 0,
+      "blocker_source": "",
+      "escalation_pending": 0,
+      "escalation_awaiting_review": 0,
+      "escalation_artifact_path": null,
+      "escalation_override_applied_at": null
+    },
+    {
+      "milestone_id": "M005",
+      "slice_id": "S01",
+      "id": "T01",
+      "title": "Add deleteMilestone service function with status validation and cascade deletion",
+      "status": "pending",
+      "one_liner": "",
+      "narrative": "",
+      "verification_result": "",
+      "duration": "",
+      "completed_at": null,
+      "blocker_discovered": false,
+      "deviations": "",
+      "known_issues": "",
+      "key_files": [],
+      "key_decisions": [],
+      "full_summary_md": "",
+      "description": "Add a `DeleteMilestoneResult` type to milestone-service.ts with three variants: `{ status: 'deleted', data: MilestoneResponse }`, `{ status: 'not_found' }`, `{ status: 'forbidden', message: string }`\n\nImplement `deleteMilestone(db, id)` function:\n- Query milestone by ID using `db.select().from(milestones).where(eq(milestones.id, id)).get()`\n- If not found, return `{ status: 'not_found' }`\n- If status is 'in-progress', return `{ status: 'forbidden', message: '该里程碑正在开发中，无法删除' }`\n- Otherwise, execute `db.delete(milestones).where(eq(milestones.id, id))` (cascade in DB schema handles modules/tasks)\n- Return `{ status: 'deleted', data: formatMilestoneResponse(milestone) }`\n\nExport `deleteMilestone` and `DeleteMilestoneResult`\n\nAdd comprehensive tests in milestone-service.test.ts using the existing in-memory SQLite + CREATE_TABLES_SQL pattern:\n- 'deletes a draft milestone and returns deleted data'\n- 'deletes a completed milestone'\n- 'deletes an archived milestone'\n- 'rejects deletion of in-progress milestone with forbidden'\n- 'returns not_found for non-existent milestone'\n- 'cascade deletes associated modules and tasks'\n\nAll 6 test cases must pass via `npx vitest run src/lib/server/milestone-service.test.ts`",
+      "estimate": "30m",
+      "files": [
+        "src/lib/server/milestone-service.ts",
+        "src/lib/server/milestone-service.test.ts"
+      ],
+      "verify": "npx vitest run src/lib/server/milestone-service.test.ts",
+      "inputs": [
+        "src/lib/server/milestone-service.ts",
+        "src/lib/db/schema.ts"
+      ],
+      "expected_output": [
+        "src/lib/server/milestone-service.ts",
+        "src/lib/server/milestone-service.test.ts"
+      ],
+      "observability_impact": "",
+      "full_plan_md": "",
+      "sequence": 0,
+      "blocker_source": "",
+      "escalation_pending": 0,
+      "escalation_awaiting_review": 0,
+      "escalation_artifact_path": null,
+      "escalation_override_applied_at": null
+    },
+    {
+      "milestone_id": "M005",
+      "slice_id": "S01",
+      "id": "T02",
+      "title": "Add DELETE handler to milestone API route",
+      "status": "pending",
+      "one_liner": "",
+      "narrative": "",
+      "verification_result": "",
+      "duration": "",
+      "completed_at": null,
+      "blocker_discovered": false,
+      "deviations": "",
+      "known_issues": "",
+      "key_files": [],
+      "key_decisions": [],
+      "full_summary_md": "",
+      "description": "Import `deleteMilestone` from `$lib/server/milestone-service.js` in `src/routes/api/milestones/[id]/+server.ts`\n\nAdd `DELETE` export as a RequestHandler:\n- Call `deleteMilestone(db, params.id)`\n- If result.status === 'not_found', return `json({ error: 'not_found', message: 'Milestone not found' }, { status: 404 })`\n- If result.status === 'forbidden', return `json({ error: 'forbidden', message: result.message }, { status: 403 })`\n- If result.status === 'deleted', return `json({ success: true, data: result.data })`\n\nRun `npm run build` to verify no compilation errors.",
+      "estimate": "15m",
+      "files": [
+        "src/routes/api/milestones/[id]/+server.ts"
+      ],
+      "verify": "npm run build",
+      "inputs": [
+        "src/routes/api/milestones/[id]/+server.ts",
+        "src/lib/server/milestone-service.ts"
+      ],
+      "expected_output": [
+        "src/routes/api/milestones/[id]/+server.ts"
+      ],
+      "observability_impact": "",
       "full_plan_md": "",
       "sequence": 0,
       "blocker_source": "",
