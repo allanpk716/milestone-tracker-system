@@ -10,9 +10,10 @@
 		milestoneId: string | null;
 		onclose: () => void;
 		ondeleted?: () => void;
+	onstatusupdated?: () => void;
 	}
 
-	let { milestoneId, onclose, ondeleted }: Props = $props();
+	let { milestoneId, onclose, ondeleted, onstatusupdated }: Props = $props();
 
 	// Panel data
 	let kanban: any = $state(null);
@@ -160,7 +161,8 @@
 			});
 			if (!res.ok) throw new Error(`HTTP ${res.status}`);
 			toast.show('状态已更新', 'success');
-			loadData(kanban.id);
+			onstatusupdated?.();
+		loadData(kanban.id);
 		} catch {
 			toast.show('更新状态失败', 'error');
 		}

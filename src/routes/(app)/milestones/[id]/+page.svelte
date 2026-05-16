@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { goto, invalidateAll } from '$app/navigation';
 	import StatusBadge from '$lib/components/StatusBadge.svelte';
 	import KanbanModuleCard from '$lib/components/KanbanModuleCard.svelte';
 	import DecomposeStream from '$lib/components/DecomposeStream.svelte';
@@ -11,6 +12,14 @@
 
 	let { data } = $props();
 	let kanban = $derived(data.kanban);
+
+	// Delete state
+	let showDeleteConfirm = $state(false);
+	let deleting = $state(false);
+	let deleteModuleCount = $derived(kanban.modules.length);
+	let deleteTaskCount = $derived(
+		kanban.modules.reduce((s: number, m: any) => s + (m.tasks?.length ?? 0), 0)
+	);
 
 	interface TaskSummary {
 		id: string;
@@ -116,9 +125,30 @@
 			});
 			if (!res.ok) throw new Error(`HTTP ${res.status}`);
 			toast.show('状态已更新', 'success');
-			window.location.reload();
+			await invalidateAll();
+			goto('/');
 		} catch {
 			toast.show('更新状态失败', 'error');
+		}
+	}
+
+	async function handleDeleteConfirm() {
+		if (deleting) return;
+		deleting = true;
+		try {
+			const res = await fetch(`/api/milestones/${kanban.id}`, { method: 'DELETE' });
+			if (!res.ok) {
+				const data = await res.json().catch(() => ({}));
+				throw new Error(data.message || `HTTP ${res.status}`);
+			}
+			toast.show('里程碑已删除', 'success');
+			showDeleteConfirm = false;
+			await invalidateAll();
+			goto('/');
+		} catch (err: any) {
+			toast.show(`删除失败: ${err.message}`, 'error');
+		} finally {
+			deleting = false;
 		}
 	}
 
@@ -159,6 +189,19 @@
 				{/if}
 			</div>
 		</div>
+			{#if kanban.status !== 'in-progress'}
+			<button
+				class="p-2 rounded-lg text-red-400 hover:text-red-600 hover:bg-red-50 transition-all"
+				onclick={() => (showDeleteConfirm = true)}
+				aria-label="删除里程碑"
+				title="删除里程碑"
+			>
+				<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+					<path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+				</svg>
+			</button>
+			{/if}
+
 		<select class="text-sm border border-slate-200 rounded-lg px-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-300 transition-all"
 			value={selectValue} onchange={(e) => handleStatusSelect(e.currentTarget.value)}>
 			{#each statusUpdateOptions as opt}
@@ -317,5 +360,20 @@
 		warning={kanban.status === 'in-progress' && pendingStatus !== 'in-progress' ? aiWarning : undefined}
 		onconfirm={handleStatusConfirm}
 		oncancel={handleStatusCancel}
+	/>
+{/if}
+
+
+<!-- Delete confirmation dialog -->
+{#if kanban}
+	<ConfirmDialog
+		open={showDeleteConfirm}
+		title="删除里程碑"
+		message="将删除 {deleteModuleCount} 个模块、{deleteTaskCount} 个任务。此操作不可撤销。"
+		confirmText={deleting ? '删除中…' : '确认删除'}
+		cancelText="取消"
+		variant="danger"
+		onconfirm={handleDeleteConfirm}
+		oncancel={() => (showDeleteConfirm = false)}
 	/>
 {/if}

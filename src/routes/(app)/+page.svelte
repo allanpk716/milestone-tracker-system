@@ -65,6 +65,10 @@
 		history.pushState({}, '', '/');
 	}
 
+	async function handleMilestoneStatusUpdated() {
+		await invalidateAll();
+	}
+
 	async function handleMilestoneDeleted() {
 		selectedMilestoneId = null;
 		history.pushState({}, '', '/');
@@ -235,7 +239,7 @@
 {/if}
 
 <!-- Slide panel -->
-<MilestoneSlidePanel milestoneId={selectedMilestoneId} onclose={closePanel} ondeleted={handleMilestoneDeleted} />
+<MilestoneSlidePanel milestoneId={selectedMilestoneId} onclose={closePanel} ondeleted={handleMilestoneDeleted} onstatusupdated={handleMilestoneStatusUpdated} />
 
 <style>
 	.animate-in {
