@@ -217,7 +217,7 @@
 {/if}
 
 <!-- Main content: left-right split -->
-<div class="flex flex-col md:flex-row h-[calc(100vh-4rem)]">
+<div class="flex flex-col md:flex-row -mx-4 sm:-mx-6 lg:-mx-8 w-[calc(100%+2rem)] sm:w-[calc(100%+3rem)] lg:w-[calc(100%+4rem)]" style="height: calc(100vh - 5.5rem);">
 	<!-- Left panel: Markdown viewer -->
 	<div class="md:w-1/2 h-1/2 md:h-full border-r border-gray-200 bg-white">
 		{#if milestone.sourceMd}

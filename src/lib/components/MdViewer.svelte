@@ -106,10 +106,10 @@
 	});
 </script>
 
-<div class="flex h-full">
+<div class="flex min-h-0">
 	<!-- TOC sidebar -->
 	{#if tocItems.length > 0}
-		<nav class="flex-shrink-0 w-48 border-r border-gray-200 bg-gray-50 overflow-y-auto py-3 px-3">
+		<nav class="flex-shrink-0 w-40 xl:w-48 border-r border-gray-200 bg-gray-50 overflow-y-auto py-3 px-3">
 			<p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">目录</p>
 			<ul class="space-y-1">
 				{#each tocItems as item (item.id)}

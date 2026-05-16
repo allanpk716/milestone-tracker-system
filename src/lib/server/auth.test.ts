@@ -138,9 +138,9 @@ describe('auth — password validation', () => {
 		expect(validatePassword('')).toBe(false);
 	});
 
-	it('returns false when ADMIN_PASSWORD is not set', () => {
+	it('returns true when ADMIN_PASSWORD is not set (auth disabled)', () => {
 		delete process.env.ADMIN_PASSWORD;
-		expect(validatePassword('anything')).toBe(false);
+		expect(validatePassword('anything')).toBe(true);
 	});
 });
 

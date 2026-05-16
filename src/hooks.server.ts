@@ -1,6 +1,6 @@
 import { redirect, json } from '@sveltejs/kit';
 import type { Handle } from '@sveltejs/kit';
-import { checkAuth } from '$lib/server/auth.js';
+import { checkAuth, isAuthEnabled } from '$lib/server/auth.js';
 import { createLogger } from '$lib/server/logger.js';
 
 const logger = createLogger('request');
@@ -41,6 +41,12 @@ export const handle: Handle = async ({ event, resolve }) => {
 				throw redirect(302, '/');
 			}
 		}
+		return logResponse(resolve(event), start, request.method, path, shouldLog);
+	}
+
+	// Auth disabled — skip all auth checks
+	if (!isAuthEnabled()) {
+		event.locals.authMethod = 'none';
 		return logResponse(resolve(event), start, request.method, path, shouldLog);
 	}
 

@@ -7,7 +7,7 @@
 <div class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30">
 	<!-- Top nav -->
 	<nav class="bg-white/80 backdrop-blur-xl border-b border-slate-200/60 sticky top-0 z-40">
-		<div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+		<div class="mx-auto px-4 sm:px-6 lg:px-10 xl:px-16 2xl:px-24">
 			<div class="flex items-center justify-between h-14">
 				<a href="/" class="flex items-center gap-2.5 group">
 					<span class="text-lg">📊</span>
@@ -44,7 +44,7 @@
 	</nav>
 
 	<!-- Page content -->
-	<main class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+	<main class="mx-auto px-4 sm:px-6 lg:px-10 xl:px-16 2xl:px-24 py-8">
 		{@render children()}
 	</main>
 </div>

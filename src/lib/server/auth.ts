@@ -2,6 +2,11 @@ import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 
 // ── Configuration ───────────────────────────────────────────────────────────
 
+/** Whether auth is enabled (ADMIN_PASSWORD is set and non-empty). */
+export function isAuthEnabled(): boolean {
+	return !!process.env.ADMIN_PASSWORD;
+}
+
 function getEnvOrThrow(key: string): string {
 	const val = process.env[key];
 	if (!val) throw new Error(`Missing required env var: ${key}`);
@@ -10,7 +15,7 @@ function getEnvOrThrow(key: string): string {
 
 /** Derive a signing secret from ADMIN_PASSWORD (always available in production). */
 function getSigningSecret(): string {
-	const pw = process.env.ADMIN_PASSWORD || '';
+	const pw = process.env.ADMIN_PASSWORD || 'dev-mode-no-password';
 	// Use HMAC of a fixed salt with the password as key to derive a stable secret
 	return createHmac('sha256', pw).update('milestone-tracker-session-salt').digest('hex');
 }
@@ -181,7 +186,7 @@ export function checkAuth(
 /** Validate a login password against ADMIN_PASSWORD env var. */
 export function validatePassword(password: string): boolean {
 	const adminPassword = process.env.ADMIN_PASSWORD;
-	if (!adminPassword) return false;
+	if (!adminPassword) return true; // No password configured = auth disabled
 	const pwBuf = Buffer.from(password);
 	const adminBuf = Buffer.from(adminPassword);
 	if (pwBuf.length !== adminBuf.length) return false;

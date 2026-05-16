@@ -281,7 +281,7 @@
 {#if activeTab === 'detail'}
 <div class="flex flex-col lg:flex-row gap-5 items-start">
 	<!-- Left column: MdViewer + module overview -->
-	<div class="w-full lg:w-[60%] min-w-0 space-y-5">
+	<div class="w-full lg:w-[75%] min-w-0 space-y-5">
 		{#if kanban.sourceMd}
 		<div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
 			<div class="h-[70vh]">
@@ -328,7 +328,7 @@
 	</div>
 
 	<!-- Right column: AI decompose area -->
-	<div class="w-full lg:w-[40%] min-w-0">
+	<div class="w-full lg:w-[25%] min-w-0">
 		<div class="lg:sticky lg:top-5">
 			<DecomposeStream milestoneId={kanban.id} sourceMd={kanban.sourceMd} status={kanban.status} />
 
