@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "exported_at": "2026-05-16T07:18:29.666Z",
+  "exported_at": "2026-05-16T08:32:18.384Z",
   "milestones": [
     {
       "id": "M001",
@@ -933,11 +933,11 @@
       "completed_at": null,
       "full_summary_md": "",
       "full_uat_md": "",
-      "goal": "修复 MdViewer 的目录导航 bug，改用 scrollTop 替代 scrollIntoView，确保目录在滚动过程中始终可见",
-      "success_criteria": "- 点击目录项，内容区平滑滚动到对应标题，不触发外部页面滚动\n- 目录侧栏始终可见\n- IntersectionObserver 滚动高亮跟随正常工作\n- 不影响 preview 页面的 MdViewer 使用",
-      "proof_level": "browser",
-      "integration_closure": "MdViewer 组件行为变化仅限于内部，不影响外部布局和 preview 页面",
-      "observability_impact": "无新增观察面",
+      "goal": "修复 MdViewer 组件目录导航：点击目录项平滑滚动到对应内容（仅内容区滚动），目录侧栏始终可见不被滚出视口，滚动时高亮跟随当前可见标题。",
+      "success_criteria": "",
+      "proof_level": "",
+      "integration_closure": "",
+      "observability_impact": "",
       "sequence": 1,
       "replan_triggered_at": null,
       "is_sketch": 0,
@@ -4779,6 +4779,80 @@
       "expected_output": [
         "src/routes/(app)/milestones/[id]/+page.svelte"
       ],
+      "observability_impact": "",
+      "full_plan_md": "",
+      "sequence": 0,
+      "blocker_source": "",
+      "escalation_pending": 0,
+      "escalation_awaiting_review": 0,
+      "escalation_artifact_path": null,
+      "escalation_override_applied_at": null
+    },
+    {
+      "milestone_id": "M006",
+      "slice_id": "S01",
+      "id": "T01",
+      "title": "Replace scrollIntoView with container-relative scrollTo in MdViewer",
+      "status": "pending",
+      "one_liner": "",
+      "narrative": "",
+      "verification_result": "",
+      "duration": "",
+      "completed_at": null,
+      "blocker_discovered": false,
+      "deviations": "",
+      "known_issues": "",
+      "key_files": [],
+      "key_decisions": [],
+      "full_summary_md": "",
+      "description": "Why: `scrollIntoView()` scrolls all scrollable ancestors including the outer page, causing the TOC sidebar to disappear.\n\nDo:\n1. In `src/lib/components/MdViewer.svelte`, replace the `scrollToHeading` function implementation.\n2. Instead of `el.scrollIntoView({ behavior: 'smooth', block: 'start' })`, compute the target scroll position relative to `contentEl` using `getBoundingClientRect()`:\n   ```js\n   const containerRect = contentEl.getBoundingClientRect();\n   const elementRect = el.getBoundingClientRect();\n   contentEl.scrollTo({\n     top: contentEl.scrollTop + elementRect.top - containerRect.top - 16,\n     behavior: 'smooth'\n   });\n   ```\n3. The `-16` offset matches the existing `scroll-margin-top: 1rem` CSS on headings, providing visual breathing room.\n4. Keep `activeHeadingId = id` assignment after scrollTo.\n5. Verify that the IntersectionObserver (already using `root: contentEl`) continues to track visible headings correctly — no changes needed there.\n\nDone when: `scrollToHeading` no longer calls `scrollIntoView`; it uses `contentEl.scrollTo` with computed relative offset. Build passes with no errors.",
+      "estimate": "20m",
+      "files": [
+        "src/lib/components/MdViewer.svelte"
+      ],
+      "verify": "npx svelte-check --workspace src",
+      "inputs": [
+        "src/lib/components/MdViewer.svelte"
+      ],
+      "expected_output": [
+        "src/lib/components/MdViewer.svelte"
+      ],
+      "observability_impact": "",
+      "full_plan_md": "",
+      "sequence": 0,
+      "blocker_source": "",
+      "escalation_pending": 0,
+      "escalation_awaiting_review": 0,
+      "escalation_artifact_path": null,
+      "escalation_override_applied_at": null
+    },
+    {
+      "milestone_id": "M006",
+      "slice_id": "S01",
+      "id": "T02",
+      "title": "Verify no scrollIntoView remains and TOC scroll structure is correct",
+      "status": "pending",
+      "one_liner": "",
+      "narrative": "",
+      "verification_result": "",
+      "duration": "",
+      "completed_at": null,
+      "blocker_discovered": false,
+      "deviations": "",
+      "known_issues": "",
+      "key_files": [],
+      "key_decisions": [],
+      "full_summary_md": "",
+      "description": "Why: Ensure the fix is complete and no regressions were introduced.\n\nDo:\n1. Grep MdViewer.svelte for any remaining `scrollIntoView` calls — there should be zero.\n2. Verify the component structure: the outer div has `class=\"flex min-h-0\"`, the content div has `overflow-y-auto` and `bind:this={contentEl}`.\n3. Verify the IntersectionObserver uses `root: contentEl` (already correct, confirm unchanged).\n4. Run `npx svelte-check` to ensure no type errors.\n5. Run `npm run build` to confirm the project builds cleanly.\n\nDone when: No `scrollIntoView` in MdViewer.svelte, component structure intact, build succeeds with zero errors.",
+      "estimate": "15m",
+      "files": [
+        "src/lib/components/MdViewer.svelte"
+      ],
+      "verify": "npm run build",
+      "inputs": [
+        "src/lib/components/MdViewer.svelte"
+      ],
+      "expected_output": [],
       "observability_impact": "",
       "full_plan_md": "",
       "sequence": 0,

@@ -1,7 +1,7 @@
 # Codebase Map
 
-Generated: 2026-05-16T07:33:32Z | Files: 228 | Described: 0/228
-<!-- gsd:codebase-meta {"generatedAt":"2026-05-16T07:33:32Z","fingerprint":"009810b862a7a8b050bbc6d0589b12da292c5e78","fileCount":228,"truncated":false} -->
+Generated: 2026-05-16T08:30:07Z | Files: 201 | Described: 0/201
+<!-- gsd:codebase-meta {"generatedAt":"2026-05-16T08:30:07Z","fingerprint":"7904127bea6db5c2000d7c5d68c0c92e71c2c032","fileCount":201,"truncated":false} -->
 
 ### (root)/
 - `.env.example`
@@ -22,44 +22,42 @@ Generated: 2026-05-16T07:33:32Z | Files: 228 | Described: 0/228
 - `"docs/\350\256\276\350\256\241\350\276\223\345\205\245\343\200\201\351\234\200\346\261\202\346\226\207\346\241\243/milestone-tracker-system-spec-2026-05-12.md"`
 
 ### .gsd.migrating/
-- *(26 files: 10 .md, 6 .jsonl, 4 .json, 2 .db, 2 .db-shm, 2 .db-wal)*
+- `.gsd.migrating/CODEBASE.md`
+- `.gsd.migrating/DECISIONS.md`
+- `.gsd.migrating/doctor-history.jsonl`
+- `.gsd.migrating/event-log.jsonl`
+- `.gsd.migrating/gsd.db`
+- `.gsd.migrating/gsd.db-shm`
+- `.gsd.migrating/gsd.db-wal`
+- `.gsd.migrating/metrics.json`
+- `.gsd.migrating/notifications.jsonl`
+- `.gsd.migrating/PROJECT.md`
+- `.gsd.migrating/REQUIREMENTS.md`
+- `.gsd.migrating/state-manifest.json`
+- `.gsd.migrating/STATE.md`
 
 ### .gsd.migrating/audit/
-- `.gsd.migrating/audit/events.jsonl`
 - `.gsd.migrating/audit/events.jsonl`
 
 ### .gsd.migrating/milestones/M003/
 - `.gsd.migrating/milestones/M003/M003-ROADMAP.md`
-- `.gsd.migrating/milestones/M003/M003-ROADMAP.md`
 
 ### .gsd.migrating/milestones/M003/slices/S05/tasks/
 - `.gsd.migrating/milestones/M003/slices/S05/tasks/T01-SUMMARY.md`
-- `.gsd.migrating/milestones/M003/slices/S05/tasks/T01-SUMMARY.md`
-- `.gsd.migrating/milestones/M003/slices/S05/tasks/T01-VERIFY.json`
 - `.gsd.migrating/milestones/M003/slices/S05/tasks/T01-VERIFY.json`
 - `.gsd.migrating/milestones/M003/slices/S05/tasks/T02-SUMMARY.md`
-- `.gsd.migrating/milestones/M003/slices/S05/tasks/T02-SUMMARY.md`
-- `.gsd.migrating/milestones/M003/slices/S05/tasks/T02-VERIFY.json`
 - `.gsd.migrating/milestones/M003/slices/S05/tasks/T02-VERIFY.json`
 - `.gsd.migrating/milestones/M003/slices/S05/tasks/T03-SUMMARY.md`
-- `.gsd.migrating/milestones/M003/slices/S05/tasks/T03-SUMMARY.md`
-- `.gsd.migrating/milestones/M003/slices/S05/tasks/T03-VERIFY.json`
 - `.gsd.migrating/milestones/M003/slices/S05/tasks/T03-VERIFY.json`
 
 ### .gsd.migrating/runtime/
 - `.gsd.migrating/runtime/uok-parity.jsonl`
-- `.gsd.migrating/runtime/uok-parity.jsonl`
-- `.gsd.migrating/runtime/uok-plan-v2-graph.json`
 - `.gsd.migrating/runtime/uok-plan-v2-graph.json`
 
 ### .gsd.migrating/runtime/units/
 - `.gsd.migrating/runtime/units/complete-slice-M003-S05.json`
-- `.gsd.migrating/runtime/units/complete-slice-M003-S05.json`
-- `.gsd.migrating/runtime/units/execute-task-M003-S05-T01.json`
 - `.gsd.migrating/runtime/units/execute-task-M003-S05-T01.json`
 - `.gsd.migrating/runtime/units/execute-task-M003-S05-T02.json`
-- `.gsd.migrating/runtime/units/execute-task-M003-S05-T02.json`
-- `.gsd.migrating/runtime/units/execute-task-M003-S05-T03.json`
 - `.gsd.migrating/runtime/units/execute-task-M003-S05-T03.json`
 
 ### .playwright-cli/
