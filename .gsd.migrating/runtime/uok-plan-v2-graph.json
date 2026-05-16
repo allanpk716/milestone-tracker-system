@@ -1,0 +1,52 @@
+{
+  "compiledAt": "2026-05-16T07:25:16.035Z",
+  "milestoneId": "M006",
+  "pipeline": {
+    "clarifyRoundLimit": 3,
+    "researchSynthesized": false,
+    "draftContextIncluded": false,
+    "finalizedContextIncluded": true,
+    "sourcePhase": "executing"
+  },
+  "nodes": [
+    {
+      "id": "execute-task:M006:S01:T01",
+      "kind": "unit",
+      "dependsOn": [],
+      "writes": [],
+      "metadata": {
+        "unitType": "execute-task",
+        "unitId": "M006.S01.T01",
+        "title": "Replace scrollIntoView with container-relative scrollTo in MdViewer",
+        "status": "pending"
+      }
+    },
+    {
+      "id": "execute-task:M006:S01:T02",
+      "kind": "unit",
+      "dependsOn": [
+        "execute-task:M006:S01:T01"
+      ],
+      "writes": [],
+      "metadata": {
+        "unitType": "execute-task",
+        "unitId": "M006.S01.T02",
+        "title": "Verify no scrollIntoView remains and TOC scroll structure is correct",
+        "status": "pending"
+      }
+    },
+    {
+      "id": "complete-slice:M006:S01",
+      "kind": "verification",
+      "dependsOn": [
+        "execute-task:M006:S01:T02"
+      ],
+      "metadata": {
+        "unitType": "complete-slice",
+        "unitId": "M006.S01",
+        "title": "MdViewer 目录导航修复",
+        "status": "pending"
+      }
+    }
+  ]
+}
