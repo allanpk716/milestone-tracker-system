@@ -6,7 +6,8 @@ import {
 	createModule,
 	listModulesByMilestone,
 	updateModule,
-	getModule
+	getModule,
+	countModulesByMilestone
 } from './module-service.js';
 import { createMilestone } from './milestone-service.js';
 
@@ -188,5 +189,39 @@ describe('module API — full CRUD cycle', () => {
 		expect(fetched!.description).toBe('Has all fields');
 		expect(fetched!.sortOrder).toBe(42);
 		expect(fetched!.status).toBe('draft');
+	});
+});
+
+describe('countModulesByMilestone', () => {
+	it('returns 0 for milestone with no modules', async () => {
+		const ms = await seedMilestone(1);
+		const count = await countModulesByMilestone(db, ms.id);
+		expect(count).toBe(0);
+	});
+
+	it('returns correct count after creating modules', async () => {
+		const ms = await seedMilestone(1);
+		await createModule(db, ms.id, { name: 'A' });
+		await createModule(db, ms.id, { name: 'B' });
+		await createModule(db, ms.id, { name: 'C' });
+
+		const count = await countModulesByMilestone(db, ms.id);
+		expect(count).toBe(3);
+	});
+
+	it('counts only modules for the specific milestone', async () => {
+		const ms1 = await seedMilestone(1);
+		const ms2 = await seedMilestone(2);
+		await createModule(db, ms1.id, { name: 'A' });
+		await createModule(db, ms2.id, { name: 'B' });
+		await createModule(db, ms2.id, { name: 'C' });
+
+		expect(await countModulesByMilestone(db, ms1.id)).toBe(1);
+		expect(await countModulesByMilestone(db, ms2.id)).toBe(2);
+	});
+
+	it('returns 0 for non-existent milestone', async () => {
+		const count = await countModulesByMilestone(db, 'MS-999');
+		expect(count).toBe(0);
 	});
 });

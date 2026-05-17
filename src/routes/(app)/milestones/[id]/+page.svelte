@@ -2,16 +2,22 @@
 	import { goto, invalidateAll } from '$app/navigation';
 	import StatusBadge from '$lib/components/StatusBadge.svelte';
 	import KanbanModuleCard from '$lib/components/KanbanModuleCard.svelte';
+	import DecomposeChat from '$lib/components/DecomposeChat.svelte';
 	import DecomposeStream from '$lib/components/DecomposeStream.svelte';
 	import MdViewer from '$lib/components/MdViewer.svelte';
 	import TaskContextMenu from '$lib/components/TaskContextMenu.svelte';
 	import TaskEditModal from '$lib/components/TaskEditModal.svelte';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
-	import { hasPendingModules } from '$lib/stores/decompose-state.svelte.js';
+	import { hasPendingModules, setPendingModules, clearPendingModules } from '$lib/stores/decompose-state.svelte.js';
 	import { toast } from '$lib/stores/toast.svelte.js';
+	import type { DecomposeModule } from '$lib/schemas/decompose.js';
 
 	let { data } = $props();
 	let kanban = $derived(data.kanban);
+	let conversation = $derived(data.conversation);
+
+	// AI extracted modules for inline confirm
+	let pendingModules = $state<DecomposeModule[]>([]);
 
 	// Delete state
 	let showDeleteConfirm = $state(false);
@@ -117,13 +123,29 @@
 	}
 
 	async function updateStatus(newStatus: string) {
+		// Draft status guard: cannot change status without modules
+		if (kanban.status === 'draft' && kanban.modules.length === 0 && pendingModules.length === 0) {
+			toast.error('草稿里程碑无模块时无法变更状态');
+			selectValue = kanban.status;
+			return;
+		}
+
 		try {
 			const res = await fetch(`/api/milestones/${kanban.id}`, {
 				method: 'PATCH',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ status: newStatus })
 			});
-			if (!res.ok) throw new Error(`HTTP ${res.status}`);
+			if (!res.ok) {
+				const data = await res.json().catch(() => ({}));
+				// Backend draft guard
+				if (res.status === 400) {
+					toast.error(data.message || '草稿里程碑无模块时无法变更状态');
+					selectValue = kanban.status;
+					return;
+				}
+				throw new Error(`HTTP ${res.status}`);
+			}
 			toast.show('状态已更新', 'success');
 			await invalidateAll();
 			goto('/');
@@ -157,6 +179,43 @@
 		if (percent >= 60) return 'bg-blue-500';
 		if (percent >= 30) return 'bg-yellow-500';
 		return 'bg-gray-400';
+	}
+
+	// AI module extraction callback
+	function handleModules(modules: DecomposeModule[]) {
+		pendingModules = modules;
+	}
+
+	// Inline confirm — write modules to DB and activate milestone
+	let confirming = $state(false);
+	let selectedModuleIndices = $state<Set<number>>(new Set());
+
+	async function confirmModules() {
+		if (confirming || pendingModules.length === 0) return;
+		confirming = true;
+
+		const modulesToConfirm = pendingModules;
+		try {
+			const res = await fetch(`/api/milestones/${kanban.id}/confirm`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ modules: modulesToConfirm })
+			});
+
+			if (!res.ok) {
+				const data = await res.json().catch(() => ({}));
+				throw new Error(data.error?.message || `HTTP ${res.status}`);
+			}
+
+			toast.show('模块已确认，里程碑已激活', 'success');
+			pendingModules = [];
+			clearPendingModules(kanban.id);
+			await invalidateAll();
+		} catch (err: any) {
+			toast.show(`确认失败: ${err.message}`, 'error');
+		} finally {
+			confirming = false;
+		}
 	}
 </script>
 
@@ -329,11 +388,53 @@
 
 	<!-- Right column: AI decompose area -->
 	<div class="w-full lg:w-[25%] min-w-0">
-		<div class="lg:sticky lg:top-5">
-			<DecomposeStream milestoneId={kanban.id} sourceMd={kanban.sourceMd} status={kanban.status} />
+		<div class="lg:sticky lg:top-5 space-y-4">
+			<div class="h-[70vh]">
+				<DecomposeChat
+					milestoneId={kanban.id}
+					sourceMd={kanban.sourceMd}
+					status={kanban.status}
+					conversation={conversation}
+					onmodules={handleModules}
+				/>
+			</div>
+
+			<!-- Inline confirm: show pending modules from AI -->
+			{#if kanban.status === 'draft' && pendingModules.length > 0}
+				<div class="bg-white rounded-xl border border-green-200 shadow-sm overflow-hidden">
+					<div class="px-4 py-2.5 bg-green-50 border-b border-green-100">
+						<h3 class="text-sm font-medium text-green-700">AI 提取了 {pendingModules.length} 个模块</h3>
+					</div>
+					<div class="p-3 space-y-2 max-h-60 overflow-y-auto">
+						{#each pendingModules as mod, i}
+							<div class="flex items-start gap-2">
+								<span class="flex-shrink-0 w-5 h-5 rounded-full bg-green-100 text-green-700 text-[10px] font-bold flex items-center justify-center mt-0.5">{i + 1}</span>
+								<div class="flex-1 min-w-0">
+									<p class="text-xs font-semibold text-slate-800">{mod.name}</p>
+									{#if mod.description}
+										<p class="text-[10px] text-slate-500 mt-0.5">{mod.description}</p>
+									{/if}
+									<p class="text-[10px] text-slate-400 mt-0.5">{mod.tasks.length} 个任务</p>
+								</div>
+							</div>
+						{/each}
+					</div>
+					<div class="p-3 border-t border-green-100">
+						<button
+							class="w-full px-4 py-2 text-sm font-medium rounded-lg
+								bg-green-600 text-white hover:bg-green-700
+								disabled:opacity-50 transition-all"
+							onclick={confirmModules}
+							disabled={confirming}
+						>
+							{confirming ? '确认中...' : '✅ 确认全部模块'}
+						</button>
+					</div>
+				</div>
+			{/if}
 
 			{#if kanban.status === 'draft' && hasPendingModules(kanban.id)}
-			<div class="mt-4">
+			<div>
 				<a href="/milestones/{kanban.id}/preview"
 				   class="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-xl
 					border border-indigo-200 text-indigo-700 bg-indigo-50/50 hover:bg-indigo-50

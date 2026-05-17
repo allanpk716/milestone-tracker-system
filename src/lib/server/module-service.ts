@@ -110,6 +110,21 @@ export async function updateModule(
 	return formatModuleResponse(result);
 }
 
+// ── Count by Milestone ───────────────────────────────────────────────────────
+
+/** Count modules for a milestone (used by draft status guard). */
+export async function countModulesByMilestone(
+	db: BetterSQLite3Database<any>,
+	milestoneId: string
+): Promise<number> {
+	const result = await db
+		.select({ id: modules.id })
+		.from(modules)
+		.where(eq(modules.milestoneId, milestoneId))
+		.all();
+	return result.length;
+}
+
 // ── Formatter ────────────────────────────────────────────────────────────────
 
 function formatModuleResponse(row: any) {
