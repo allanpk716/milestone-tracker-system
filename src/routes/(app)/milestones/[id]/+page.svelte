@@ -343,7 +343,7 @@
 	<div class="w-full lg:w-[75%] min-w-0 space-y-5">
 		{#if kanban.sourceMd}
 		<div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
-			<div class="h-[70vh]">
+			<div class="h-[70vh] overflow-hidden">
 				<MdViewer sourceMd={kanban.sourceMd} />
 			</div>
 		</div>

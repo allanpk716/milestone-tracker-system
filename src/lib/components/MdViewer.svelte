@@ -106,7 +106,7 @@
 	});
 </script>
 
-<div class="flex min-h-0">
+<div class="flex min-h-0 h-full">
 	<!-- TOC sidebar -->
 	{#if tocItems.length > 0}
 		<nav class="flex-shrink-0 w-40 xl:w-48 border-r border-gray-200 bg-gray-50 overflow-y-auto py-3 px-3">
