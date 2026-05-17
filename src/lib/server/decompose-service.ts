@@ -25,7 +25,7 @@ import {
 
 const logger = createLogger('decompose-service');
 
-const SYSTEM_PROMPT = `你是一个专业的项目管理助手。你的任务是将需求文档拆解为结构化的模块和任务。
+export const DEFAULT_SYSTEM_PROMPT = `你是一个专业的项目管理助手。你的任务是将需求文档拆解为结构化的模块和任务。
 
 ## 输出格式
 
@@ -62,6 +62,162 @@ const SYSTEM_PROMPT = `你是一个专业的项目管理助手。你的任务是
 - 如果需求文档不清晰，根据上下文做出合理推断
 - 每个模块至少包含一个任务
 - 确保所有任务合起来能覆盖需求文档的全部内容`;
+
+// ── Chunk event types (for multi-turn chat) ─────────────────────────────────
+
+export interface ChunkTextEvent {
+	type: 'chunk';
+	stage: 'text';
+	content: string;
+}
+
+export interface ChunkModulesEvent {
+	type: 'chunk';
+	stage: 'modules';
+	modules: DecomposeModule[];
+}
+
+export type ChunkEvent = ChunkTextEvent | ChunkModulesEvent;
+
+// ── Message building for multi-turn ─────────────────────────────────────────
+
+const MAX_HISTORY_TURNS = 10;
+
+export interface HistoryMessage {
+	role: 'user' | 'assistant';
+	content: string;
+	modulesJson?: string | null;
+}
+
+export function buildMessages(
+	history: HistoryMessage[],
+	sourceMd: string,
+	customSystemPrompt?: string | null
+): Array<{ role: string; content: string }> {
+	const systemPrompt = customSystemPrompt || DEFAULT_SYSTEM_PROMPT;
+	const msgs: Array<{ role: string; content: string }> = [
+		{ role: 'system', content: systemPrompt }
+	];
+
+	// Include source context as first user message
+	msgs.push({
+		role: 'user',
+		content: `请将以下需求文档拆解为模块和任务：\n\n${sourceMd}`
+	});
+
+	// Add history (capped at MAX_HISTORY_TURNS turns = N user + N assistant)
+	const recent = history.slice(-MAX_HISTORY_TURNS * 2);
+	for (const msg of recent) {
+		let content = msg.content;
+		if (msg.role === 'assistant' && msg.modulesJson) {
+			// Append modules info for context
+			try {
+				const mods = JSON.parse(msg.modulesJson);
+				if (Array.isArray(mods) && mods.length > 0) {
+					content += `\n\n[已提取模块: ${mods.map((m: any) => m.name).join(', ')}]`;
+				}
+			} catch {
+				// ignore parse errors
+			}
+		}
+		msgs.push({ role: msg.role, content });
+	}
+
+	return msgs;
+}
+
+// ── Module extraction from LLM response ──────────────────────────────────────
+
+export function extractModulesFromText(text: string): DecomposeModule[] {
+	const modules: DecomposeModule[] = [];
+
+	// Try to find JSON array in the text
+	// First try: fenced code block
+	const fencedMatch = text.match(/```(?:json)?\s*\n?([\s\S]*?)```/);
+	if (fencedMatch) {
+		const parsed = tryParseModules(fencedMatch[1]);
+		if (parsed.length > 0) return parsed;
+	}
+
+	// Second try: bare JSON array
+	const bareMatch = text.match(/\[[\s\S]*\]/);
+	if (bareMatch) {
+		const parsed = tryParseModules(bareMatch[0]);
+		if (parsed.length > 0) return parsed;
+	}
+
+	return modules;
+}
+
+function tryParseModules(jsonStr: string): DecomposeModule[] {
+	const modules: DecomposeModule[] = [];
+	try {
+		const parsed = JSON.parse(jsonStr);
+		const candidates = Array.isArray(parsed) ? parsed : [parsed];
+		for (const candidate of candidates) {
+			const result = decomposeModuleSchema.safeParse(candidate);
+			if (result.success) {
+				modules.push(result.data);
+			}
+		}
+	} catch {
+		// Try extracting individual objects
+		const { objects } = extractCompleteJsonObjects(jsonStr);
+		for (const objStr of objects) {
+			try {
+				const parsed = JSON.parse(objStr);
+				const candidates = Array.isArray(parsed) ? parsed : [parsed];
+				for (const candidate of candidates) {
+					const result = decomposeModuleSchema.safeParse(candidate);
+					if (result.success) {
+						modules.push(result.data);
+					}
+				}
+			} catch {
+				// skip
+			}
+		}
+	}
+	return modules;
+}
+
+// ── Multi-turn stream decompose ──────────────────────────────────────────────
+
+/**
+ * Stream a multi-turn decompose chat. Yields chunk events for text streaming
+ * and module extraction.
+ */
+export async function* streamDecomposeMulti(
+	history: HistoryMessage[],
+	sourceMd: string,
+	client?: LlmClient,
+	opts?: { customSystemPrompt?: string | null }
+): AsyncGenerator<ChunkEvent | DecomposeErrorEvent | DecomposeDoneEvent> {
+	const llm = client ?? new LlmClient();
+	let fullText = '';
+	let errorCount = 0;
+	let extractedModules: DecomposeModule[] = [];
+
+	const msgs = buildMessages(history, sourceMd, opts?.customSystemPrompt);
+
+	try {
+		for await (const chunk of llm.chatCompletionStreamMulti(msgs)) {
+			fullText += chunk;
+			yield { type: 'chunk', stage: 'text', content: chunk } as ChunkTextEvent;
+		}
+
+		// After stream completes, extract modules from the full response
+		extractedModules = extractModulesFromText(fullText);
+		if (extractedModules.length > 0) {
+			yield { type: 'chunk', stage: 'modules', modules: extractedModules } as ChunkModulesEvent;
+		}
+	} catch (err: any) {
+		errorCount++;
+		yield { type: 'error', stage: 'streaming', message: err.message } as DecomposeErrorEvent;
+	} finally {
+		yield { type: 'done', total: extractedModules.length, errors: errorCount } as DecomposeDoneEvent;
+	}
+}
 
 // ── Incremental JSON object extractor ───────────────────────────────────────
 
@@ -152,7 +308,7 @@ export async function* streamDecompose(
 
 	try {
 		// Phase 1: Connecting
-		for await (const chunk of llm.chatCompletionStream(SYSTEM_PROMPT, userMessage)) {
+		for await (const chunk of llm.chatCompletionStream(DEFAULT_SYSTEM_PROMPT, userMessage)) {
 			jsonBuffer += chunk;
 
 			// Try to extract complete objects from the buffer

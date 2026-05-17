@@ -3,6 +3,7 @@ import type { RequestHandler } from './$types.js';
 import { db } from '$lib/db/index.js';
 import { getMilestone, updateMilestone, deleteMilestone } from '$lib/server/milestone-service.js';
 import { updateMilestoneSchema } from '$lib/schemas/index.js';
+import { countModulesByMilestone } from '$lib/server/module-service.js';
 
 export const GET: RequestHandler = async ({ params }) => {
 	const milestone = await getMilestone(db, params.id);
@@ -33,6 +34,20 @@ export const PATCH: RequestHandler = async ({ params, request }) => {
 			},
 			{ status: 400 }
 		);
+	}
+
+	// Draft status guard: cannot change away from draft without modules
+	if (parsed.data.status && parsed.data.status !== 'draft') {
+		const existing = await getMilestone(db, params.id);
+		if (existing && existing.status === 'draft') {
+			const moduleCount = await countModulesByMilestone(db, params.id);
+			if (moduleCount === 0) {
+				return json(
+					{ error: 'bad_request', message: '草稿里程碑无模块时无法变更为其他状态' },
+					{ status: 400 }
+				);
+			}
+		}
 	}
 
 	const milestone = await updateMilestone(db, params.id, parsed.data);

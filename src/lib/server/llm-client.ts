@@ -34,13 +34,25 @@ export class LlmClient {
 	 * Throws on non-OK HTTP status, timeout, or stream errors.
 	 */
 	async *chatCompletionStream(systemPrompt: string, userMessage: string): AsyncGenerator<string> {
+		// Delegate to multi-turn with a single user message
+		yield* this.chatCompletionStreamMulti(
+			[{ role: 'system', content: systemPrompt }, { role: 'user', content: userMessage }]
+		);
+	}
+
+	/**
+	 * Stream a chat-completion with full message history and yield content deltas.
+	 * Supports multi-turn conversations by passing an array of messages.
+	 */
+	async *chatCompletionStreamMulti(
+		msgs: Array<{ role: string; content: string }>
+	): AsyncGenerator<string> {
 		const url = `${this.baseUrl}/chat/completions`;
 
 		logger.info('Request', {
 			url,
 			model: this.model,
-			systemPromptLength: systemPrompt.length,
-			userMessageLength: userMessage.length
+			messageCount: msgs.length
 			// apiKey intentionally omitted
 		});
 
@@ -58,10 +70,7 @@ export class LlmClient {
 				body: JSON.stringify({
 					model: this.model,
 					stream: true,
-					messages: [
-						{ role: 'system', content: systemPrompt },
-						{ role: 'user', content: userMessage }
-					]
+					messages: msgs
 				}),
 				signal: controller.signal
 			});

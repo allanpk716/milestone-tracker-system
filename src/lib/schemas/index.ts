@@ -75,3 +75,20 @@ export type {
 	CompareDoneEvent,
 	ConfirmModuleResponse
 } from './confirm.js';
+
+export {
+	messageRoleSchema,
+	messageSchema,
+	conversationSchema,
+	createConversationSchema,
+	sendMessageSchema,
+	updateSystemPromptSchema
+} from './conversation.js';
+export type {
+	MessageRole,
+	Message as ConversationMessage,
+	Conversation,
+	CreateConversationRequest,
+	SendMessageRequest,
+	UpdateSystemPromptRequest
+} from './conversation.js';

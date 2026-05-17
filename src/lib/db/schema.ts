@@ -98,6 +98,45 @@ export const tasks = sqliteTable(
 	]
 );
 
+// ── Conversation ─────────────────────────────────────────────────────────────
+// 1:1 with milestone. Stores multi-turn AI decomposition chat state.
+
+export const conversations = sqliteTable(
+	'conversations',
+	{
+		id: text('id').primaryKey(),
+		milestoneId: text('milestone_id')
+			.notNull()
+			.unique() // 1:1 with milestone
+			.references(() => milestones.id, { onDelete: 'cascade' }),
+		systemPrompt: text('system_prompt'),
+		createdAt: integer('created_at', { mode: 'timestamp' })
+			.notNull()
+			.default(sql`(unixepoch())`)
+	},
+	(table) => [index('conversation_milestone_id_idx').on(table.milestoneId)]
+);
+
+// ── Message ──────────────────────────────────────────────────────────────────
+// Individual messages within a conversation.
+
+export const messages = sqliteTable(
+	'messages',
+	{
+		id: text('id').primaryKey(),
+		conversationId: text('conversation_id')
+			.notNull()
+			.references(() => conversations.id, { onDelete: 'cascade' }),
+		role: text('role', { enum: ['user', 'assistant'] }).notNull(),
+		content: text('content').notNull(),
+		modulesJson: text('modules_json'), // JSON string of DecomposeModule[] for assistant messages
+		createdAt: integer('created_at', { mode: 'timestamp' })
+			.notNull()
+			.default(sql`(unixepoch())`)
+	},
+	(table) => [index('message_conversation_id_idx').on(table.conversationId)]
+);
+
 // ── Type exports for use in application code ──
 
 export type Milestone = typeof milestones.$inferSelect;
@@ -106,3 +145,7 @@ export type Module = typeof modules.$inferSelect;
 export type NewModule = typeof modules.$inferInsert;
 export type Task = typeof tasks.$inferSelect;
 export type NewTask = typeof tasks.$inferInsert;
+export type Conversation = typeof conversations.$inferSelect;
+export type NewConversation = typeof conversations.$inferInsert;
+export type Message = typeof messages.$inferSelect;
+export type NewMessage = typeof messages.$inferInsert;
